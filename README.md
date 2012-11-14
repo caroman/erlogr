@@ -1,4 +1,7 @@
-Erlang bindings for the GDAL/OGR  and GDAL/OSR APIs.Install
+Erlang bindings for the GDAL/OGR  and GDAL/OSR APIs
+===================================================
+
+.Install
 -------
 
 Build it with:
