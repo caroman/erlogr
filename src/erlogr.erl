@@ -17,7 +17,7 @@
 -export([
     get_driver/1,
     get_driver_by_name/1,
-    dr_name/1 
+    dr_get_name/1 
     ]).
 
 -ifdef(makecheck).
@@ -47,7 +47,7 @@ get_driver(_DriverIdx) ->
 get_driver_by_name(_DriverName) ->
     "NIF library not loaded".
 
-dr_name(_Driver) ->
+dr_get_name(_Driver) ->
     "NIF library not loaded".
 
 

@@ -105,13 +105,13 @@ unload(ErlNifEnv* env, void* priv_data)
 
 /************************************************************************
  *
- *  Data Source
+ *  OGRSFDriverRegistrar
  *
  ***********************************************************************/
 
 /*
 Driver = erlogr:get_driver(0),
-erlogr:dr_name(Driver).
+erlogr:dr_get_name(Driver).
 "ESRI Shapefile"
 */
 static ERL_NIF_TERM
@@ -124,16 +124,17 @@ get_driver(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return 0;
     }
 
-    OGRSFDriverH **driver = \
-        enif_alloc_resource(OGR_D_RESOURCE, sizeof(OGRSFDriverH*));
+    OGRSFDriverH drv = OGRGetDriver(driver_idx); 
 
-    *driver = OGRGetDriver(driver_idx);
-
-    if (!*driver)
+    if (!drv)
     {
         //printf("Driver not found!\n");
         return 0;
     } 
+
+    OGRSFDriverH **driver = \
+        enif_alloc_resource(OGR_D_RESOURCE, sizeof(OGRSFDriverH*));
+    *driver = drv;
 
     eterm = enif_make_resource(env, driver);
     enif_release_resource(driver);
@@ -142,7 +143,7 @@ get_driver(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 /*
 Driver = erlogr:get_driver_by_name("ESRI Shapefile"),
-erlogr:dr_name(Driver).
+erlogr:dr_get_name(Driver).
 "ESRI Shapefile"
 */
 static ERL_NIF_TERM
@@ -161,17 +162,17 @@ get_driver_by_name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return 0;
     }
 
-    OGRSFDriverH **driver = \
-        enif_alloc_resource(OGR_D_RESOURCE, sizeof(OGRSFDriverH*));
+    OGRSFDriverH drv = OGRGetDriverByName(driver_name);
 
-    *driver = OGRGetDriverByName(driver_name);
-
-    if (!*driver)
+    if (!drv)
     {
         //printf("Driver not found!\n");
-        enif_release_resource(driver);
         return 0;
     } 
+
+    OGRSFDriverH **driver = \
+        enif_alloc_resource(OGR_D_RESOURCE, sizeof(OGRSFDriverH*));
+    *driver = drv;
 
     eterm = enif_make_resource(env, driver);
     enif_release_resource(driver);
@@ -179,13 +180,19 @@ get_driver_by_name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return eterm;
 }
 
+/************************************************************************
+ *
+ *  OGRSFDriver
+ *
+ ***********************************************************************/
+
 /*
 Driver = erlogr:get_driver(0),
-erlogr:dr_name(Driver).
+erlogr:dr_get_name(Driver).
 "ESRI Shapefile"
 */
 static ERL_NIF_TERM
-dr_name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+dr_get_name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     OGRSFDriverH **driver;
     ERL_NIF_TERM eterm;
@@ -203,7 +210,7 @@ static ErlNifFunc nif_funcs[] =
 {
     {"get_driver_by_name", 1, get_driver_by_name},
     {"get_driver", 1, get_driver},
-    {"dr_name", 1, dr_name} 
+    {"dr_get_name", 1, dr_get_name} 
 };
 
 ERL_NIF_INIT(erlogr, nif_funcs, &load, NULL, NULL, unload);

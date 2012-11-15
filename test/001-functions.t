@@ -27,13 +27,13 @@ main(_) ->
 
 test_get_driver() ->
     Driver = erlogr:get_driver(0),
-    DriverName = erlogr:dr_name(Driver),
+    DriverName = erlogr:dr_get_name(Driver),
     etap:is(DriverName, "ESRI Shapefile",
         "Function get_driver works").
 
 test_get_driver_by_name() ->
     Driver = erlogr:get_driver_by_name("ESRI Shapefile"),
-    DriverName = erlogr:dr_name(Driver),
+    DriverName = erlogr:dr_get_name(Driver),
     etap:is(DriverName, "ESRI Shapefile",
         "Function get_driver_by_name works").
 

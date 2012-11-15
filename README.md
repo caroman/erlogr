@@ -1,6 +1,3 @@
-Erlang bindings for the GDAL/OGR  and GDAL/OSR APIs
-===================================================
-
 Install
 -------
 
@@ -46,11 +43,11 @@ more examples.
     Eshell V5.8.4  (abort with ^G)
 
     1> Driver = erlogr:get_driver(0),
-    1> erlogr:dr_name(Driver).
+    1> erlogr:dr_get_name(Driver).
     "ESRI Shapefile"
 
     2> Driver = erlogr:get_driver_by_name("ESRI Shapefile"),
-    2> erlogr:dr_name(Driver).
+    2> erlogr:dr_get_name(Driver).
     "ESRI Shapefile"
 
 
