@@ -13,6 +13,9 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
+
+// http://www.gdal.org/ogr/ogr__api_8h.html
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
@@ -32,7 +35,8 @@ static void
 datasource_destroy(ErlNifEnv *env, void *obj)
 {
     OGRDataSourceH **datasource = (OGRDataSourceH**)obj;
-    OGR_DS_Destroy(*datasource);
+    //OGR_DS_Destroy(*datasource);
+    OGRReleaseDataSource(*datasource);
 }
 
 static void
@@ -102,12 +106,92 @@ unload(ErlNifEnv* env, void* priv_data)
     OGRCleanupAll();
 }
 
+/************************************************************************
+ *
+ *  OGRlayer
+ *
+ ***********************************************************************/
+//OGR_L_GetName
+//OGR_L_GetGeomType
+//OGR_L_GetFeature
+//OGR_L_GetLayerDefn
+//OGR_L_GetFeatureCount
+//OGR_L_GetGeometryColumn
+
+
+/************************************************************************
+ *
+ *  OGRDataSource
+ *
+ ***********************************************************************/
+//OGR_DS_GetLayerCount
+//OGR_DS_GetLayer
+
+
 
 /************************************************************************
  *
  *  OGRSFDriverRegistrar
  *
  ***********************************************************************/
+
+/*
+DataSource = erlogr:ogr_open("test/polygon.shp").
+DataSource = erlogr:ogr_open("test/polygon.shp", 1).
+*/
+static ERL_NIF_TERM
+ogr_open(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    char * filename;
+    int update = 0; // read-only (default)
+    OGRDataSourceH datasource;
+    ERL_NIF_TERM eterm1;
+    /*
+    OGRSFDriverH  *pahDriver;
+    ERL_NIF_TERM eterm1, eterm2;
+    */
+
+    unsigned len;
+    if (!enif_get_list_length(env, argv[0], &len)) {
+        return 0;
+    }
+    filename = malloc(sizeof(char)*(len+1));
+
+    if(!enif_get_string(env, argv[0], filename, len+1, ERL_NIF_LATIN1)) {
+        return 0;
+    }
+
+    if (argc>1 && !enif_get_int(env, argv[1], &update)) {
+        return 0;
+    }
+
+    datasource = OGROpen(filename, update, NULL);
+    //datasource = OGROpen(filename, upadate, pahDriver);
+
+    if(datasource == NULL) {
+        return 0;
+    }
+
+    OGRDataSourceH **hDS = \
+        enif_alloc_resource(OGR_DS_RESOURCE, sizeof(OGRDataSourceH*));
+    *hDS = datasource;
+
+    /*
+    OGRSFDriverH **hDriver = \
+        enif_alloc_resource(OGR_D_RESOURCE, sizeof(OGRSFDriverH*));
+    *hDriver = *pahDriver;
+    */
+
+
+    eterm1 = enif_make_resource(env, hDS);
+    enif_release_resource(hDS);
+    return eterm1;
+    /*
+    eterm2 = enif_make_resource(env, hDriver);
+    enif_release_resource(hDriver);
+    return enif_make_tuple2(env, eterm1, eterm1);
+    */
+}
 
 /*
 Driver = erlogr:get_driver(0),
@@ -208,9 +292,11 @@ dr_get_name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 static ErlNifFunc nif_funcs[] =
 {
+    {"dr_get_name", 1, dr_get_name},
     {"get_driver_by_name", 1, get_driver_by_name},
     {"get_driver", 1, get_driver},
-    {"dr_get_name", 1, dr_get_name} 
+    {"ogr_open", 1, ogr_open},
+    {"ogr_open", 2, ogr_open}
 };
 
 ERL_NIF_INIT(erlogr, nif_funcs, &load, NULL, NULL, unload);

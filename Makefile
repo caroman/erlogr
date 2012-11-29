@@ -3,7 +3,7 @@ all: build
 %.beam: %.erl
 	erlc -o test/ $<
 
-build: c_src/erlogr.c
+build: c_src/erlogr.c c_src/erlosr.c
 	./rebar compile
 
 build-for-check: clean

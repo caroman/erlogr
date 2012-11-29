@@ -15,9 +15,11 @@
 -module(erlogr).
 
 -export([
+    dr_get_name/1,
     get_driver/1,
     get_driver_by_name/1,
-    dr_get_name/1 
+    ogr_open/1,
+    ogr_open/2
     ]).
 
 -ifdef(makecheck).
@@ -41,13 +43,18 @@ init() ->
     end,
     (catch erlang:load_nif(SoName, 0)).
 
+dr_get_name(_Driver) ->
+    "NIF library not loaded".
+
 get_driver(_DriverIdx) ->
     "NIF library not loaded".
 
 get_driver_by_name(_DriverName) ->
     "NIF library not loaded".
 
-dr_get_name(_Driver) ->
+ogr_open(_FileName) ->
     "NIF library not loaded".
 
+ogr_open(_FileName, _Update) ->
+    "NIF library not loaded".
 
