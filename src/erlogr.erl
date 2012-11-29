@@ -15,11 +15,13 @@
 -module(erlogr).
 
 -export([
+    ds_get_layer/2,
+    ds_get_layer_count/1,
     dr_get_name/1,
     get_driver/1,
     get_driver_by_name/1,
-    ogr_open/1,
-    ogr_open/2
+    open/1,
+    open/2
     ]).
 
 -ifdef(makecheck).
@@ -43,6 +45,12 @@ init() ->
     end,
     (catch erlang:load_nif(SoName, 0)).
 
+ds_get_layer(_Datasource, _Index) ->
+    "NIF library not loaded".
+
+ds_get_layer_count(_Datasource) ->
+    "NIF library not loaded".
+
 dr_get_name(_Driver) ->
     "NIF library not loaded".
 
@@ -52,9 +60,9 @@ get_driver(_DriverIdx) ->
 get_driver_by_name(_DriverName) ->
     "NIF library not loaded".
 
-ogr_open(_FileName) ->
+open(_FileName) ->
     "NIF library not loaded".
 
-ogr_open(_FileName, _Update) ->
+open(_FileName, _Update) ->
     "NIF library not loaded".
 

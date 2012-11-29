@@ -30,6 +30,7 @@ static ErlNifResourceType* OGR_FD_RESOURCE;
 static ErlNifResourceType* OGR_FLD_RESOURCE;
 static ErlNifResourceType* OGR_G_RESOURCE;
 static ErlNifResourceType* OGR_D_RESOURCE;
+static ErlNifResourceType* OGR_L_RESOURCE;
 
 static void
 datasource_destroy(ErlNifEnv *env, void *obj)
@@ -97,6 +98,11 @@ load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info)
         env, NULL, "ogr_d_resource", NULL,
         ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL);
 
+    OGR_L_RESOURCE = enif_open_resource_type(
+        env, NULL, "ogr_l_resource", NULL,
+        ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL);
+
+
     return 0;
 }
 
@@ -124,23 +130,72 @@ unload(ErlNifEnv* env, void* priv_data)
  *  OGRDataSource
  *
  ***********************************************************************/
-//OGR_DS_GetLayerCount
-//OGR_DS_GetLayer
+/* int    CPL_DLL OGR_DS_GetLayerCount( OGRDataSourceH );
+DataSource = erlogr:open("test/polygon.shp"),
+erlogr:ds_get_layer_count(DataSource).
+*/
+static ERL_NIF_TERM
+ds_get_layer_count(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    OGRDataSourceH *datasource;
+    ERL_NIF_TERM eterm;
+
+    if(!enif_get_resource(env, argv[0], OGR_DS_RESOURCE, (void**)&datasource)) {
+        return 0;
+    }
+
+    int count = OGR_DS_GetLayerCount(*datasource);
+    eterm = enif_make_int(env, count);
+    return eterm;
+}
+ 
+/* OGRLayerH CPL_DLL OGR_DS_GetLayer( OGRDataSourceH, int );
+DataSource = erlogr:open("test/polygon.shp"),
+erlogr:ds_get_layer(DataSource, 0).
+*/
+static ERL_NIF_TERM
+ds_get_layer(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    OGRDataSourceH *datasource;
+    int index;
+    ERL_NIF_TERM eterm;
+
+    if (!enif_get_int(env, argv[1], &index)) {
+        return 0;
+    }
+
+    if(!enif_get_resource(env, argv[0], OGR_DS_RESOURCE, (void**)&datasource)) {
+        return 0;
+    }
 
 
+    OGRLayerH lyr = OGR_DS_GetLayer(*datasource, index);
+    if(lyr == NULL) {
+        return 0;
+    }
 
+    OGRLayerH **layer = \
+        enif_alloc_resource(OGR_L_RESOURCE, sizeof(OGRLayerH*));
+    *layer = lyr;
+
+    eterm = enif_make_resource(env, layer);
+    enif_release_resource(layer);
+    return eterm;
+}
+ 
 /************************************************************************
  *
  *  OGRSFDriverRegistrar
  *
  ***********************************************************************/
 
-/*
-DataSource = erlogr:ogr_open("test/polygon.shp").
-DataSource = erlogr:ogr_open("test/polygon.shp", 1).
+/* OGRDataSourceH CPL_DLL OGROpen( const char *, int, OGRSFDriverH * ) 
+    CPL_WARN_UNUSED_RESULT;
+DataSource = erlogr:open("test/polygon.shp").
+DataSource = erlogr:open("test/polygon.shp", 1).
 */
 static ERL_NIF_TERM
-ogr_open(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+open(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     char * filename;
     int update = 0; // read-only (default)
@@ -193,7 +248,7 @@ ogr_open(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     */
 }
 
-/*
+/* OGRSFDriverH CPL_DLL OGRGetDriver( int );
 Driver = erlogr:get_driver(0),
 erlogr:dr_get_name(Driver).
 "ESRI Shapefile"
@@ -225,7 +280,7 @@ get_driver(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return eterm;
 }
 
-/*
+/* OGRSFDriverH CPL_DLL OGRGetDriverByName( const char * );
 Driver = erlogr:get_driver_by_name("ESRI Shapefile"),
 erlogr:dr_get_name(Driver).
 "ESRI Shapefile"
@@ -270,7 +325,7 @@ get_driver_by_name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
  *
  ***********************************************************************/
 
-/*
+/* const char CPL_DLL *OGR_Dr_GetName( OGRSFDriverH );
 Driver = erlogr:get_driver(0),
 erlogr:dr_get_name(Driver).
 "ESRI Shapefile"
@@ -292,11 +347,13 @@ dr_get_name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 static ErlNifFunc nif_funcs[] =
 {
+    {"ds_get_layer", 2, ds_get_layer},
+    {"ds_get_layer_count", 1, ds_get_layer_count},
     {"dr_get_name", 1, dr_get_name},
     {"get_driver_by_name", 1, get_driver_by_name},
     {"get_driver", 1, get_driver},
-    {"ogr_open", 1, ogr_open},
-    {"ogr_open", 2, ogr_open}
+    {"open", 1, open},
+    {"open", 2, open}
 };
 
 ERL_NIF_INIT(erlogr, nif_funcs, &load, NULL, NULL, unload);
