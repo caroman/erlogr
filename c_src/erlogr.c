@@ -117,9 +117,53 @@ unload(ErlNifEnv* env, void* priv_data)
  *  OGRlayer
  *
  ***********************************************************************/
+/* int OGR_L_GetFeatureCount(OGRLayerH hLayer, int bForce)
+
+DataSource = erlogr:open("test/polygon.shp"),
+Layer = erlogr:ds_get_layer(DataSource, 0),
+erlogr:l_get_feature_count(Layer).
+*
+*/
+static ERL_NIF_TERM
+l_get_feature_count(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    OGRLayerH *layer;
+    ERL_NIF_TERM eterm;
+
+    if(!enif_get_resource(env, argv[0], OGR_L_RESOURCE, (void**)&layer)) {
+        return 0;
+    }
+
+    int count = OGR_L_GetFeatureCount(*layer, 1);
+    eterm = enif_make_int(env, count);
+    return eterm;
+}
+ 
+/* OGRFeatureH OGR_L_GetFeature(OGRLayerH hLayer, long nFeatureId)   
+
+DataSource = erlogr:open("test/polygon.shp"),
+Layer = erlogr:ds_get_layer(DataSource, 0),
+Feature = erlogr:l_get_feature(Layer, 0).
+*
+*/
+static ERL_NIF_TERM
+l_get_feature(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    OGRLayerH *layer;
+    ERL_NIF_TERM eterm;
+
+    if(!enif_get_resource(env, argv[0], OGR_L_RESOURCE, (void**)&layer)) {
+        return 0;
+    }
+
+    int count = OGR_L_GetFeature(*layer, 1);
+    eterm = enif_make_int(env, count);
+    return eterm;
+}
+ 
+
 //OGR_L_GetName
 //OGR_L_GetGeomType
-//OGR_L_GetFeature
 //OGR_L_GetLayerDefn
 //OGR_L_GetFeatureCount
 //OGR_L_GetGeometryColumn
@@ -350,6 +394,7 @@ static ErlNifFunc nif_funcs[] =
     {"ds_get_layer", 2, ds_get_layer},
     {"ds_get_layer_count", 1, ds_get_layer_count},
     {"dr_get_name", 1, dr_get_name},
+    {"l_get_feature_count", 1, l_get_feature_count},
     {"get_driver_by_name", 1, get_driver_by_name},
     {"get_driver", 1, get_driver},
     {"open", 1, open},

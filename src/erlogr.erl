@@ -18,6 +18,7 @@
     ds_get_layer/2,
     ds_get_layer_count/1,
     dr_get_name/1,
+    l_get_feature_count/1,
     get_driver/1,
     get_driver_by_name/1,
     open/1,
@@ -52,6 +53,9 @@ ds_get_layer_count(_Datasource) ->
     "NIF library not loaded".
 
 dr_get_name(_Driver) ->
+    "NIF library not loaded".
+
+l_get_feature_count(_Datasource) ->
     "NIF library not loaded".
 
 get_driver(_DriverIdx) ->
