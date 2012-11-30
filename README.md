@@ -50,4 +50,14 @@ more examples.
     2> erlogr:dr_get_name(Driver).
     "ESRI Shapefile"
 
+    3> DataSource = erlogr:open("test/polygon.shp"),
+    3> Layer = erlogr:ds_get_layer(DataSource, 0),
+    3> Feature = erlogr:l_get_feature(Layer, 0),
+    3> Geometry = erlogr:f_get_geometry_ref(Feature),
+    3> Wkt = erlogr:g_export_to_wkt(Geometry).
+    "POLYGON ((0.351988636363636 -0.969460227272728,2.058238636363636 0.086505681818182,2.690625 -1.524289772727273,0.0 -2.0015625,-0.304261363636364 -1.828551136363636,0.351988636363636 -0.969460227272728))" 
+
+    4> Wkb = erlogr:g_export_to_wkb(Geometry).
+    <<1,3,0,0,0,1,0,0,0,6,0,0,0,136,181,111,88,251,134,214,63,
+      72,23,93,116,209,5,239,191,...>>
 
