@@ -521,12 +521,52 @@ dr_get_name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return eterm;
 }
 
+/************************************************************************
+ *
+ *  Erlang Specific Functions
+ *
+ ***********************************************************************/
+
+/*
+
+DataSource = erlogr:open("test/polygon.shp"),
+Layer = erlogr:ds_get_layer(DataSource, 0),
+Feature = erlogr:l_get_feature(Layer, 0),
+erlogr:f_get_fields(Feature).
+
+*/
+static ERL_NIF_TERM
+f_get_fields(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    OGRFeatureH *feature;
+    ERL_NIF_TERM eterm;
+
+    if(!enif_get_resource(env, argv[0], OGR_F_RESOURCE, (void**)&feature)) {
+        return 0;
+    }
+
+    int count = OGR_F_GetFieldCount(*feature);
+    ERL_NIF_TERM *arr = (ERL_NIF_TERM *) malloc(sizeof(ERL_NIF_TERM)*count);
+    int index;
+    for(index=0; index<count; index++)
+    {
+        //OGRFieldDefnH field_defn = OGR_F_GetFieldDefnRef(*feature, index);
+        const char *value = OGR_F_GetFieldAsString(*feature, index);
+        arr[index] = enif_make_string(env, value, ERL_NIF_LATIN1);
+    }
+
+    eterm = enif_make_tuple_from_array(env, arr, index);
+    return eterm;
+}
+
+
 
 static ErlNifFunc nif_funcs[] =
 {
     {"ds_get_layer", 2, ds_get_layer},
     {"ds_get_layer_count", 1, ds_get_layer_count},
     {"dr_get_name", 1, dr_get_name},
+    {"f_get_fields", 1, f_get_fields},
     {"f_get_geometry_ref", 1, f_get_geometry_ref},
     {"g_export_to_wkb", 1, g_export_to_wkb},
     {"g_export_to_wkt", 1, g_export_to_wkt},

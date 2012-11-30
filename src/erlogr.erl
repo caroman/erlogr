@@ -18,6 +18,7 @@
     ds_get_layer/2,
     ds_get_layer_count/1,
     dr_get_name/1,
+    f_get_fields/1,
     f_get_geometry_ref/1,
     g_export_to_wkb/1,
     g_export_to_wkt/1,
@@ -63,6 +64,9 @@ g_export_to_wkb(_Geometry) ->
     "NIF library not loaded".
 
 g_export_to_wkt(_Geometry) ->
+    "NIF library not loaded".
+
+f_get_fields(_Feature) ->
     "NIF library not loaded".
 
 f_get_geometry_ref(_Feature) ->
