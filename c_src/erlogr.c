@@ -556,6 +556,7 @@ f_get_fields(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     }
 
     eterm = enif_make_tuple_from_array(env, arr, index);
+    free(arr);
     return eterm;
 }
 
