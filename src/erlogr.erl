@@ -18,6 +18,10 @@
     ds_get_layer/2,
     ds_get_layer_count/1,
     dr_get_name/1,
+    f_get_geometry_ref/1,
+    g_export_to_wkb/1,
+    g_export_to_wkt/1,
+    l_get_feature/2,
     l_get_feature_count/1,
     get_driver/1,
     get_driver_by_name/1,
@@ -55,7 +59,19 @@ ds_get_layer_count(_Datasource) ->
 dr_get_name(_Driver) ->
     "NIF library not loaded".
 
-l_get_feature_count(_Datasource) ->
+g_export_to_wkb(_Geometry) ->
+    "NIF library not loaded".
+
+g_export_to_wkt(_Geometry) ->
+    "NIF library not loaded".
+
+f_get_geometry_ref(_Feature) ->
+    "NIF library not loaded".
+
+l_get_feature(_Layer, _Index) ->
+    "NIF library not loaded".
+
+l_get_feature_count(_Layer) ->
     "NIF library not loaded".
 
 get_driver(_DriverIdx) ->
