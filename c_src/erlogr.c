@@ -174,14 +174,14 @@ g_export_to_wkt(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return 0;
     }
 
-    char **wkt = NULL;
-    OGRErr eErr = OGR_G_ExportToWkt(*geometry, wkt);
+    char *wkt = NULL;
+    OGRErr eErr = OGR_G_ExportToWkt(*geometry, &wkt);
     if (eErr != OGRERR_NONE) {
         return 0;
     }
 
-    eterm = enif_make_string(env, (char *)*wkt, ERL_NIF_LATIN1);
-    OGRFree(*wkt);
+    eterm = enif_make_string(env, wkt, ERL_NIF_LATIN1);
+    OGRFree(wkt);
     return eterm;
 }
  
