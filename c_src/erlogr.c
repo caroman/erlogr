@@ -30,6 +30,7 @@ static ErlNifResourceType* OGR_F_RESOURCE;
 static ErlNifResourceType* OGR_FD_RESOURCE;
 static ErlNifResourceType* OGR_FLD_RESOURCE;
 static ErlNifResourceType* OGR_G_RESOURCE;
+static ErlNifResourceType* OGR_GREF_RESOURCE;
 static ErlNifResourceType* OGR_D_RESOURCE;
 static ErlNifResourceType* OGR_L_RESOURCE;
 
@@ -62,14 +63,14 @@ fielddefn_destroy(ErlNifEnv *env, void *obj)
     OGR_Fld_Destroy(*fielddefn);
 }
 
-/*
+
 static void
 geometry_destroy(ErlNifEnv *env, void *obj)
 {
     OGRGeometryH **geometry = (OGRGeometryH**)obj;
     OGR_G_DestroyGeometry(*geometry);
 }
-*/
+
 
 /* From https://github.com/iamaleksey/iconverl/blob/master/c_src/iconverl.c */
 static int
@@ -94,7 +95,11 @@ load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info)
         ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL);
 
     OGR_G_RESOURCE = enif_open_resource_type(
-        env, NULL, "ogr_g_resource", NULL,
+        env, NULL, "ogr_g_resource", &geometry_destroy,
+        ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL);
+
+    OGR_GREF_RESOURCE = enif_open_resource_type(
+        env, NULL, "ogr_gref_resource", NULL,
         ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL);
 
     OGR_D_RESOURCE = enif_open_resource_type(
@@ -136,7 +141,7 @@ g_export_to_wkb(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     OGRGeometryH *geometry;
     ERL_NIF_TERM eterm;
 
-    if(!enif_get_resource(env, argv[0], OGR_G_RESOURCE, (void**)&geometry)) {
+    if(!enif_get_resource(env, argv[0], OGR_GREF_RESOURCE, (void**)&geometry)) {
         return 0;
     }
 
@@ -170,7 +175,7 @@ g_export_to_wkt(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     OGRGeometryH *geometry;
     ERL_NIF_TERM eterm;
 
-    if(!enif_get_resource(env, argv[0], OGR_G_RESOURCE, (void**)&geometry)) {
+    if(!enif_get_resource(env, argv[0], OGR_GREF_RESOURCE, (void**)&geometry)) {
         return 0;
     }
 
@@ -215,7 +220,7 @@ f_get_geometry_ref(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     }
 
     OGRGeometryH **geometry = \
-        enif_alloc_resource(OGR_G_RESOURCE, sizeof(OGRGeometryH*));
+        enif_alloc_resource(OGR_GREF_RESOURCE, sizeof(OGRGeometryH*));
     *geometry = geom;
 
 
