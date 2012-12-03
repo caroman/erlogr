@@ -270,6 +270,66 @@ l_get_feature(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     enif_release_resource(feature);
     return eterm;
 }
+
+/* OGRFeatureH OGR_L_GetNextFeature(OGRLayerH hLayer)   
+
+DataSource = erlogr:open("test/polygon.shp"),
+Layer = erlogr:ds_get_layer(DataSource, 0),
+Feature = erlogr:l_get_next_feature(Layer).
+
+*/
+static ERL_NIF_TERM
+l_get_next_feature(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    OGRLayerH *layer;
+    ERL_NIF_TERM eterm1, eterm2;
+
+    if(!enif_get_resource(env, argv[0], OGR_L_RESOURCE, (void**)&layer)) {
+        return 0;
+    }
+
+    OGRFeatureH feat = OGR_L_GetNextFeature(*layer);
+    if(feat == NULL) {
+        eterm1 = enif_make_atom(env, "error");
+        eterm2 = enif_make_string(env, "No more features", ERL_NIF_LATIN1);
+        return enif_make_tuple2(env,  eterm1, eterm2); 
+    }
+
+    OGRFeatureH **feature = \
+        enif_alloc_resource(OGR_F_RESOURCE, sizeof(OGRFeatureH*));
+    *feature = feat;
+
+    eterm1 = enif_make_atom(env, "ok");
+    eterm2 = enif_make_resource(env, feature);
+    enif_release_resource(feature);
+    return enif_make_tuple2(env,  eterm1, eterm2); 
+}
+ 
+/* OGRFeatureH OGR_L_ResetReading(OGRLayerH hLayer)   
+
+DataSource = erlogr:open("test/polygon.shp"),
+Layer = erlogr:ds_get_layer(DataSource, 0),
+Feature = erlogr:l_get_next_feature(Layer).
+erlogr:l_get_next_feature(Layer).
+erlogr:l_reset_reading(Layer).
+erlogr:l_get_next_feature(Layer).
+
+*/
+static ERL_NIF_TERM
+l_reset_reading(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    OGRLayerH *layer;
+    ERL_NIF_TERM eterm;
+
+    if(!enif_get_resource(env, argv[0], OGR_L_RESOURCE, (void**)&layer)) {
+        return 0;
+    }
+
+    OGR_L_ResetReading(*layer);
+
+    eterm = enif_make_atom(env, "ok");
+    return eterm;
+}
  
 /* int OGR_L_GetFeatureCount(OGRLayerH hLayer, int bForce)
 
@@ -578,6 +638,8 @@ static ErlNifFunc nif_funcs[] =
     {"g_export_to_wkt", 1, g_export_to_wkt},
     {"l_get_feature", 2, l_get_feature},
     {"l_get_feature_count", 1, l_get_feature_count},
+    {"l_get_next_feature", 1, l_get_next_feature},
+    {"l_reset_reading", 1, l_reset_reading},
     {"get_driver_by_name", 1, get_driver_by_name},
     {"get_driver", 1, get_driver},
     {"open", 1, open},

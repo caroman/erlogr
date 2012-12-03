@@ -24,6 +24,8 @@
     g_export_to_wkt/1,
     l_get_feature/2,
     l_get_feature_count/1,
+    l_get_next_feature/1,
+    l_reset_reading/1,
     get_driver/1,
     get_driver_by_name/1,
     open/1,
@@ -76,6 +78,12 @@ l_get_feature(_Layer, _Index) ->
     "NIF library not loaded".
 
 l_get_feature_count(_Layer) ->
+    "NIF library not loaded".
+
+l_get_next_feature(_Layer) ->
+    "NIF library not loaded".
+
+l_reset_reading(_Layer) ->
     "NIF library not loaded".
 
 get_driver(_DriverIdx) ->
