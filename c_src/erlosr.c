@@ -70,7 +70,7 @@ unload(ErlNifEnv* env, void* priv_data)
 
 /*
 SRS = erlosr:import_from_epsg(4326).
-"ESRI Shapefile"
+<<>>
 */
 static ERL_NIF_TERM
 import_from_epsg(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -82,25 +82,42 @@ import_from_epsg(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return 0;
     }
 
-    OGRSpatialReferenceH hSR1;
-    if (hSR1 == NULL){printf("NULL\n");} else {printf("NOTNULL\n");}
-
     OGRSpatialReferenceH hSR = OSRNewSpatialReference(NULL);
-    printf("hola\n");
-    if (hSR == NULL){printf("NULL\n");} else {printf("NOTNULL\n");}
-    if (!OSRImportFromEPSG(hSR, epsg)) {
+    if (OSRImportFromEPSG(hSR, epsg) != OGRERR_NONE) {
         return 0;
     }
 
-    printf("hola\n");
     OGRSpatialReferenceH **spatial_reference = \
         enif_alloc_resource(OSR_SR_RESOURCE, sizeof(OGRSpatialReferenceH*));
-    printf("hola\n");
     *spatial_reference = hSR;
 
-    printf("hola\n");
     eterm = enif_make_resource(env, spatial_reference);
     enif_release_resource(spatial_reference);
+    return eterm;
+}
+
+/*
+SRS = erlosr:import_from_epsg(4326),
+WKT = erlosr:export_to_wkt(SRS).
+"GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]]"
+*/
+static ERL_NIF_TERM
+export_to_wkt(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    OGRSpatialReferenceH *srs;
+    ERL_NIF_TERM eterm;
+
+    if(!enif_get_resource(env, argv[0], OSR_SR_RESOURCE, (void**)&srs)) {
+        return 0;
+    }
+
+    char *wkt = NULL;
+    if (OSRExportToWkt(*srs, &wkt) != OGRERR_NONE) {
+        return 0;
+    }
+
+    eterm = enif_make_string(env, wkt, ERL_NIF_LATIN1);
+    OGRFree(wkt);
     return eterm;
 }
 
@@ -108,6 +125,7 @@ import_from_epsg(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ErlNifFunc nif_funcs[] =
 {
     {"import_from_epsg", 1, import_from_epsg},
+    {"export_to_wkt", 1, export_to_wkt} 
 };
 
 ERL_NIF_INIT(erlosr, nif_funcs, &load, NULL, NULL, unload);

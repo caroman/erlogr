@@ -180,8 +180,7 @@ g_export_to_wkt(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     }
 
     char *wkt = NULL;
-    OGRErr eErr = OGR_G_ExportToWkt(*geometry, &wkt);
-    if (eErr != OGRERR_NONE) {
+    if (OGR_G_ExportToWkt(*geometry, &wkt) != OGRERR_NONE) {
         return 0;
     }
 

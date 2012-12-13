@@ -15,7 +15,8 @@
 -module(erlosr).
 
 -export([
-    import_from_epsg/1
+    import_from_epsg/1,
+    export_to_wkt/1
     ]).
 
 -ifdef(makecheck).
@@ -40,6 +41,9 @@ init() ->
     (catch erlang:load_nif(SoName, 0)).
 
 import_from_epsg(_EPSG) ->
+    "NIF library not loaded".
+
+export_to_wkt(_EPSG) ->
     "NIF library not loaded".
 
 
