@@ -20,11 +20,15 @@
     dr_get_name/1,
     f_get_fields/1,
     f_get_geometry_ref/1,
+    fd_get_field_defn/2,
+    fd_get_fields_type/1,
+    fd_get_fields_name/1,
     g_export_to_wkb/1,
     g_export_to_wkt/1,
     l_get_feature/2,
     l_get_feature_count/1,
     l_get_next_feature/1,
+    l_get_layer_defn/1,
     l_reset_reading/1,
     get_driver/1,
     get_driver_by_name/1,
@@ -74,6 +78,15 @@ f_get_fields(_Feature) ->
 f_get_geometry_ref(_Feature) ->
     "NIF library not loaded".
 
+fd_get_field_defn(_Feature, _Index) ->
+    "NIF library not loaded".
+
+fd_get_fields_name(_FeatureDefn) ->
+    "NIF library not loaded".
+
+fd_get_fields_type(_FeatureDefn) ->
+    "NIF library not loaded".
+
 l_get_feature(_Layer, _Index) ->
     "NIF library not loaded".
 
@@ -81,6 +94,9 @@ l_get_feature_count(_Layer) ->
     "NIF library not loaded".
 
 l_get_next_feature(_Layer) ->
+    "NIF library not loaded".
+
+l_get_layer_defn(_Layer) ->
     "NIF library not loaded".
 
 l_reset_reading(_Layer) ->
