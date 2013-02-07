@@ -24,6 +24,7 @@
     fd_get_fields_name/1,
     fd_get_fields_type/1,
     fd_get_geom_type/1,
+    fld_get_name_ref/1,
     fld_get_type/1,
     g_export_to_wkb/1,
     g_export_to_wkt/1,
@@ -90,6 +91,9 @@ fd_get_fields_type(_FeatureDefn) ->
     "NIF library not loaded".
 
 fd_get_geom_type(_FeatureDefn) ->
+    "NIF library not loaded".
+
+fld_get_name_ref(_FieldDefn) ->
     "NIF library not loaded".
 
 fld_get_type(_FieldDefn) ->
