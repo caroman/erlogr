@@ -172,7 +172,7 @@ g_export_to_wkb(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return eterm;
 }
 
-/* OGR_G_ExportToWkt (OGRGeometryH, char **)
+/* OGR_G_ExportToWkt(OGRGeometryH, char **)
 
 DataSource = erlogr:open("test/polygon.shp"),
 Layer = erlogr:ds_get_layer(DataSource, 0),
@@ -239,6 +239,106 @@ f_get_geometry_ref(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     enif_release_resource(geometry);
     return eterm;
 }
+
+/************************************************************************
+ *
+ *  OGRFeatureDefn
+ *
+ ***********************************************************************/
+
+/* OGRFieldDefnH OGR_FD_GetFieldDefn(OGRFeatureDefnH hDefn, int iField)   
+
+DataSource = erlogr:open("test/polygon.shp"),
+Layer = erlogr:ds_get_layer(DataSource, 0),
+FeatureDefn = erlogr:l_get_layer_defn(Layer),
+FieldDefn = erlogr:fd_get_field_defn(FeatureDefn, 0).
+
+*/
+static ERL_NIF_TERM
+fd_get_field_defn(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    OGRFeatureDefnH *feat_defn;
+    int index;
+    ERL_NIF_TERM eterm;
+
+    if(!enif_get_resource(env, argv[0], OGR_FD_RESOURCE, (void**)&feat_defn)) {
+        return 0;
+    }
+
+    if (!enif_get_int(env, argv[1], &index)) {
+        return 0;
+    }
+
+    OGRFieldDefnH fd_defn = OGR_FD_GetFieldDefn(*feat_defn, index);
+
+    if(fd_defn == NULL) {
+        return 0;
+    }
+
+    OGRFeatureDefnH **field_defn = \
+        enif_alloc_resource(OGR_FLD_RESOURCE, sizeof(OGRFieldDefnH*));
+    *field_defn = fd_defn;
+
+    eterm = enif_make_resource(env, field_defn);
+    enif_release_resource(field_defn);
+    return eterm;
+}
+ 
+/* OGRwkbGeometryType OGR_FD_GetGeomType(OGRFeatureDefnH)
+
+DataSource = erlogr:open("test/polygon.shp"),
+Layer = erlogr:ds_get_layer(DataSource, 0),
+FeatureDefn = erlogr:l_get_layer_defn(Layer),
+GeomType = erlogr:fd_get_geom_type(FeatureDefn).
+
+*/
+static ERL_NIF_TERM
+fd_get_geom_type(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    OGRFeatureDefnH *feat_defn;
+    ERL_NIF_TERM eterm;
+
+    if(!enif_get_resource(env, argv[0], OGR_FD_RESOURCE, (void**)&feat_defn)) {
+        return 0;
+    }
+
+    OGRwkbGeometryType geom_type = OGR_FD_GetGeomType(*feat_defn);
+
+    eterm = enif_make_int(env, geom_type);
+    return eterm;
+}
+
+/************************************************************************
+ *
+ *  OGRField
+ *
+ ***********************************************************************/
+
+/* OGRFieldType OGR_Fld_GetType(OGRFieldDefnH)
+
+DataSource = erlogr:open("test/polygon.shp"),
+Layer = erlogr:ds_get_layer(DataSource, 0),
+FeatureDefn = erlogr:l_get_layer_defn(Layer).
+FieldDefn = erlogr:fd_get_field_defn(FeatureDefn, 0),
+FieldType = erlogr:fld_get_type(FieldDefn).
+
+*/
+static ERL_NIF_TERM
+fld_get_type(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    OGRFieldDefnH *field_defn;
+    ERL_NIF_TERM eterm;
+
+    if(!enif_get_resource(env, argv[0], OGR_FLD_RESOURCE, (void**)&field_defn)){
+        return 0;
+    }
+
+    OGRFieldType field_type = OGR_Fld_GetType(*field_defn);
+
+    eterm = enif_make_int(env, field_type);
+    return eterm;
+}
+
  
 /************************************************************************
  *
@@ -391,75 +491,6 @@ l_get_layer_defn(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     enif_release_resource(feature_defn);
     return eterm;
 }
-
-/************************************************************************
- *
- *  OGRFeatureDefn
- *
- ***********************************************************************/
-
-/* OGRFieldDefnH OGR_FD_GetFieldDefn(OGRFeatureDefnH hDefn, int iField)   
-
-DataSource = erlogr:open("test/polygon.shp"),
-Layer = erlogr:ds_get_layer(DataSource, 0),
-FeatureDefn = erlogr:l_get_layer_defn(Layer),
-FieldDefn = erlogr:fd_get_field_defn(FeatureDefn, 0).
-
-*/
-static ERL_NIF_TERM
-fd_get_field_defn(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
-{
-    OGRFeatureDefnH *feat_defn;
-    int index;
-    ERL_NIF_TERM eterm;
-
-    if(!enif_get_resource(env, argv[0], OGR_FD_RESOURCE, (void**)&feat_defn)) {
-        return 0;
-    }
-
-    if (!enif_get_int(env, argv[1], &index)) {
-        return 0;
-    }
-
-    OGRFieldDefnH fd_defn = OGR_FD_GetFieldDefn(*feat_defn, index);
-
-    if(fd_defn == NULL) {
-        return 0;
-    }
-
-    OGRFeatureDefnH **field_defn = \
-        enif_alloc_resource(OGR_FD_RESOURCE, sizeof(OGRFieldDefnH*));
-    *field_defn = fd_defn;
-
-    eterm = enif_make_resource(env, field_defn);
-    enif_release_resource(field_defn);
-    return eterm;
-}
- 
-/* OGRwkbGeometryType OGR_FD_GetGeomType(OGRFeatureDefnH)
-
-DataSource = erlogr:open("test/polygon.shp"),
-Layer = erlogr:ds_get_layer(DataSource, 0),
-FeatureDefn = erlogr:l_get_layer_defn(Layer),
-GeomType = erlogr:fd_get_geom_type(FeatureDefn).
-
-*/
-static ERL_NIF_TERM
-fd_get_geom_type(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
-{
-    OGRFeatureDefnH *feat_defn;
-    ERL_NIF_TERM eterm;
-
-    if(!enif_get_resource(env, argv[0], OGR_FD_RESOURCE, (void**)&feat_defn)) {
-        return 0;
-    }
-
-    OGRwkbGeometryType geom_type = OGR_FD_GetGeomType(*feat_defn);
-
-    eterm = enif_make_int(env, geom_type);
-    return eterm;
-}
- 
 
 /************************************************************************
  *
@@ -827,6 +858,7 @@ static ErlNifFunc nif_funcs[] =
     {"fd_get_fields_name", 1, fd_get_fields_name},
     {"fd_get_fields_type", 1, fd_get_fields_type},
     {"fd_get_geom_type", 1, fd_get_geom_type},
+    {"fld_get_type", 1, fld_get_type},
     {"g_export_to_wkb", 1, g_export_to_wkb},
     {"g_export_to_wkt", 1, g_export_to_wkt},
     {"l_get_feature", 2, l_get_feature},
