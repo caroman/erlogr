@@ -246,6 +246,30 @@ f_get_geometry_ref(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
  *
  ***********************************************************************/
 
+/* int  OGR_FD_GetFieldCount(OGRFeatureDefnH)
+
+DataSource = erlogr:open("test/polygon.shp"),
+Layer = erlogr:ds_get_layer(DataSource, 0),
+FeatureDefn = erlogr:l_get_layer_defn(Layer),
+FieldCount = erlogr:fd_get_field_count(FeatureDefn).
+
+*/
+static ERL_NIF_TERM
+fd_get_field_count(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    OGRFeatureDefnH *feat_defn;
+    ERL_NIF_TERM eterm;
+
+    if(!enif_get_resource(env, argv[0], OGR_FD_RESOURCE, (void**)&feat_defn)) {
+        return 0;
+    }
+
+    int field_count = OGR_FD_GetFieldCount(*feat_defn);
+
+    eterm = enif_make_int(env, field_count);
+    return eterm;
+}
+ 
 /* OGRFieldDefnH OGR_FD_GetFieldDefn(OGRFeatureDefnH hDefn, int iField)   
 
 DataSource = erlogr:open("test/polygon.shp"),
@@ -879,6 +903,7 @@ static ErlNifFunc nif_funcs[] =
     {"dr_get_name", 1, dr_get_name},
     {"f_get_fields", 1, f_get_fields},
     {"f_get_geometry_ref", 1, f_get_geometry_ref},
+    {"fd_get_field_count", 1, fd_get_field_count},
     {"fd_get_field_defn", 2, fd_get_field_defn},
     {"fd_get_fields_name", 1, fd_get_fields_name},
     {"fd_get_fields_type", 1, fd_get_fields_type},

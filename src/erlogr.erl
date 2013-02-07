@@ -20,6 +20,7 @@
     dr_get_name/1,
     f_get_fields/1,
     f_get_geometry_ref/1,
+    fd_get_field_count/1,
     fd_get_field_defn/2,
     fd_get_fields_name/1,
     fd_get_fields_type/1,
@@ -79,6 +80,9 @@ f_get_fields(_Feature) ->
     "NIF library not loaded".
 
 f_get_geometry_ref(_Feature) ->
+    "NIF library not loaded".
+
+fd_get_field_count(_FeatureDefn) ->
     "NIF library not loaded".
 
 fd_get_field_defn(_FeatureDefn, _Index) ->
