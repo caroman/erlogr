@@ -398,7 +398,6 @@ l_get_layer_defn(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
  *
  ***********************************************************************/
 
-
 /* OGRFieldDefnH OGR_FD_GetFieldDefn(OGRFeatureDefnH hDefn, int iField)   
 
 DataSource = erlogr:open("test/polygon.shp"),
@@ -434,6 +433,30 @@ fd_get_field_defn(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     eterm = enif_make_resource(env, field_defn);
     enif_release_resource(field_defn);
+    return eterm;
+}
+ 
+/* OGRwkbGeometryType OGR_FD_GetGeomType(OGRFeatureDefnH)
+
+DataSource = erlogr:open("test/polygon.shp"),
+Layer = erlogr:ds_get_layer(DataSource, 0),
+FeatureDefn = erlogr:l_get_layer_defn(Layer),
+GeomType = erlogr:fd_get_geom_type(FeatureDefn).
+
+*/
+static ERL_NIF_TERM
+fd_get_geom_type(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    OGRFeatureDefnH *feat_defn;
+    ERL_NIF_TERM eterm;
+
+    if(!enif_get_resource(env, argv[0], OGR_FD_RESOURCE, (void**)&feat_defn)) {
+        return 0;
+    }
+
+    OGRwkbGeometryType geom_type = OGR_FD_GetGeomType(*feat_defn);
+
+    eterm = enif_make_int(env, geom_type);
     return eterm;
 }
  
@@ -803,6 +826,7 @@ static ErlNifFunc nif_funcs[] =
     {"fd_get_field_defn", 2, fd_get_field_defn},
     {"fd_get_fields_name", 1, fd_get_fields_name},
     {"fd_get_fields_type", 1, fd_get_fields_type},
+    {"fd_get_geom_type", 1, fd_get_geom_type},
     {"g_export_to_wkb", 1, g_export_to_wkb},
     {"g_export_to_wkt", 1, g_export_to_wkt},
     {"l_get_feature", 2, l_get_feature},
