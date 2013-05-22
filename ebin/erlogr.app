@@ -1,7 +1,7 @@
 {application, erlgdal, [
-    {description, "Erlogr - Erlang binding for gdal/[ogr,osr] libraries"},
+    {description, "Erlogr - Erlang binding for GDAL/OGR"},
     {vsn, "0.1.0"},
-    {modules, [erlogr, erlosr]},
+    {modules, [erlogr]},
     {registered, []},
     {applications, [kernel, stdlib]},
     {env, []}
