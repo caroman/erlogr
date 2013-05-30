@@ -27,7 +27,7 @@ main(_) ->
 % Feature Functions
 
 test_g_export_to_wkt() ->
-    DataSource = erlogr:open("test/polygon.shp"),
+    {ok, DataSource} = erlogr:open("test/polygon.shp"),
     Layer = erlogr:ds_get_layer(DataSource, 0),
     Feature = erlogr:l_get_feature(Layer, 0),
     Geometry = erlogr:f_get_geometry_ref(Feature),

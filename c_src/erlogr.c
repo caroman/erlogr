@@ -135,7 +135,7 @@ unload(ErlNifEnv* env, void* priv_data)
 
 /* OGR_G_ExportToWkb (OGRGeometryH, OGRwkbByteOrder, unsigned char *)
 
-DataSource = erlogr:open("test/polygon.shp"),
+{ok, DataSource} = erlogr:open("test/polygon.shp"),
 Layer = erlogr:ds_get_layer(DataSource, 0),
 Feature = erlogr:l_get_feature(Layer, 0),
 Geometry = erlogr:f_get_geometry_ref(Feature),
@@ -174,7 +174,7 @@ g_export_to_wkb(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 /* OGR_G_ExportToWkt(OGRGeometryH, char **)
 
-DataSource = erlogr:open("test/polygon.shp"),
+{ok, DataSource} = erlogr:open("test/polygon.shp"),
 Layer = erlogr:ds_get_layer(DataSource, 0),
 Feature = erlogr:l_get_feature(Layer, 0),
 Geometry = erlogr:f_get_geometry_ref(Feature),
@@ -209,7 +209,7 @@ g_export_to_wkt(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 /* OGRGeometryH OGR_F_GetGeometryRef(OGRFeatureH hFeat)    
 
-DataSource = erlogr:open("test/polygon.shp"),
+{ok, DataSource} = erlogr:open("test/polygon.shp"),
 Layer = erlogr:ds_get_layer(DataSource, 0),
 Feature = erlogr:l_get_feature(Layer, 0),
 Geometry = erlogr:f_get_geometry_ref(Feature).
@@ -248,7 +248,7 @@ f_get_geometry_ref(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 /* int  OGR_FD_GetFieldCount(OGRFeatureDefnH)
 
-DataSource = erlogr:open("test/polygon.shp"),
+{ok, DataSource} = erlogr:open("test/polygon.shp"),
 Layer = erlogr:ds_get_layer(DataSource, 0),
 FeatureDefn = erlogr:l_get_layer_defn(Layer),
 FieldCount = erlogr:fd_get_field_count(FeatureDefn).
@@ -272,7 +272,7 @@ fd_get_field_count(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
  
 /* OGRFieldDefnH OGR_FD_GetFieldDefn(OGRFeatureDefnH hDefn, int iField)   
 
-DataSource = erlogr:open("test/polygon.shp"),
+{ok, DataSource} = erlogr:open("test/polygon.shp"),
 Layer = erlogr:ds_get_layer(DataSource, 0),
 FeatureDefn = erlogr:l_get_layer_defn(Layer),
 FieldDefn = erlogr:fd_get_field_defn(FeatureDefn, 0).
@@ -310,7 +310,7 @@ fd_get_field_defn(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
  
 /* OGRwkbGeometryType OGR_FD_GetGeomType(OGRFeatureDefnH)
 
-DataSource = erlogr:open("test/polygon.shp"),
+{ok, DataSource} = erlogr:open("test/polygon.shp"),
 Layer = erlogr:ds_get_layer(DataSource, 0),
 FeatureDefn = erlogr:l_get_layer_defn(Layer),
 GeomType = erlogr:fd_get_geom_type(FeatureDefn).
@@ -339,7 +339,7 @@ fd_get_geom_type(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
  ***********************************************************************/
 /* OGRFieldType OGR_Fld_GetNameRef(OGRFieldDefnH)
 
-DataSource = erlogr:open("test/polygon.shp"),
+{ok, DataSource} = erlogr:open("test/polygon.shp"),
 Layer = erlogr:ds_get_layer(DataSource, 0),
 FeatureDefn = erlogr:l_get_layer_defn(Layer).
 FieldDefn = erlogr:fd_get_field_defn(FeatureDefn, 0),
@@ -365,7 +365,7 @@ fld_get_name_ref(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 /* OGRFieldType OGR_Fld_GetType(OGRFieldDefnH)
 
-DataSource = erlogr:open("test/polygon.shp"),
+{ok, DataSource} = erlogr:open("test/polygon.shp"),
 Layer = erlogr:ds_get_layer(DataSource, 0),
 FeatureDefn = erlogr:l_get_layer_defn(Layer).
 FieldDefn = erlogr:fd_get_field_defn(FeatureDefn, 0),
@@ -397,7 +397,7 @@ fld_get_type(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 /* OGRFeatureH OGR_L_GetFeature(OGRLayerH hLayer, long nFeatureId)   
 
-DataSource = erlogr:open("test/polygon.shp"),
+{ok, DataSource} = erlogr:open("test/polygon.shp"),
 Layer = erlogr:ds_get_layer(DataSource, 0),
 Feature = erlogr:l_get_feature(Layer, 0).
 
@@ -433,7 +433,7 @@ l_get_feature(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 /* OGRFeatureH OGR_L_GetNextFeature(OGRLayerH hLayer)   
 
-DataSource = erlogr:open("test/polygon.shp"),
+{ok, DataSource} = erlogr:open("test/polygon.shp"),
 Layer = erlogr:ds_get_layer(DataSource, 0),
 Feature = erlogr:l_get_next_feature(Layer).
 
@@ -467,7 +467,7 @@ l_get_next_feature(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
  
 /* OGRFeatureH OGR_L_ResetReading(OGRLayerH hLayer)   
 
-DataSource = erlogr:open("test/polygon.shp"),
+{ok, DataSource} = erlogr:open("test/polygon.shp"),
 Layer = erlogr:ds_get_layer(DataSource, 0),
 Feature = erlogr:l_get_next_feature(Layer).
 erlogr:l_get_next_feature(Layer).
@@ -493,7 +493,7 @@ l_reset_reading(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
  
 /* int OGR_L_GetFeatureCount(OGRLayerH hLayer, int bForce)
 
-DataSource = erlogr:open("test/polygon.shp"),
+{ok, DataSource} = erlogr:open("test/polygon.shp"),
 Layer = erlogr:ds_get_layer(DataSource, 0),
 erlogr:l_get_feature_count(Layer).
 
@@ -515,7 +515,7 @@ l_get_feature_count(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
  
 /* OGRFeatureDefnH OGR_L_GetLayerDefn(OGRLayerH hLayer)
 
-DataSource = erlogr:open("test/polygon.shp"),
+{ok, DataSource} = erlogr:open("test/polygon.shp"),
 Layer = erlogr:ds_get_layer(DataSource, 0),
 FeatureDefn = erlogr:l_get_layer_defn(Layer).
 
@@ -549,7 +549,7 @@ l_get_layer_defn(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 /* int    CPL_DLL OGR_DS_GetLayerCount( OGRDataSourceH );
 
-DataSource = erlogr:open("test/polygon.shp"),
+{ok, DataSource} = erlogr:open("test/polygon.shp"),
 erlogr:ds_get_layer_count(DataSource).
 
 */
@@ -570,7 +570,7 @@ ds_get_layer_count(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
  
 /* OGRLayerH CPL_DLL OGR_DS_GetLayer( OGRDataSourceH, int );
 
-DataSource = erlogr:open("test/polygon.shp"),
+{ok, DataSource} = erlogr:open("test/polygon.shp"),
 erlogr:ds_get_layer(DataSource, 0).
 
 */
@@ -613,8 +613,8 @@ ds_get_layer(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 /* OGRDataSourceH CPL_DLL OGROpen(const char *, int, OGRSFDriverH *) 
     CPL_WARN_UNUSED_RESULT;
 
-DataSource = erlogr:open("test/polygon.shp").
-DataSource = erlogr:open("test/polygon.shp", 1).
+{ok, DataSource} = erlogr:open("test/polygon.shp").
+{ok, DataSource} = erlogr:open("test/polygon.shp", 1).
 
 */
 static ERL_NIF_TERM
@@ -663,7 +663,7 @@ open(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     eterm1 = enif_make_resource(env, hDS);
     enif_release_resource(hDS);
-    return eterm1;
+    return enif_make_tuple2(env, enif_make_atom(env, "ok"), eterm1);
     /*
     eterm2 = enif_make_resource(env, hDriver);
     enif_release_resource(hDriver);
@@ -781,11 +781,11 @@ dr_get_name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 /*
 
-DataSource = erlogr:open("test/polygon.shp"),
+{ok, DataSource} = erlogr:open("test/polygon.shp"),
 Layer = erlogr:ds_get_layer(DataSource, 0),
 Feature = erlogr:l_get_feature(Layer, 0),
 erlogr:f_get_fields(Feature).
-
+{1,"first"}
 */
 static ERL_NIF_TERM
 f_get_fields(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -828,11 +828,11 @@ f_get_fields(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 /*
 
-DataSource = erlogr:open("test/polygon.shp"),
+{ok, DataSource} = erlogr:open("test/polygon.shp"),
 Layer = erlogr:ds_get_layer(DataSource, 0),
 FeatureDefn = erlogr:l_get_layer_defn(Layer),
 erlogr:fd_get_fields_name(FeatureDefn).
-
+{"id","name"}
 */
 static ERL_NIF_TERM
 fd_get_fields_name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -862,11 +862,11 @@ fd_get_fields_name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 /*
 
-DataSource = erlogr:open("test/polygon.shp"),
+{ok, DataSource} = erlogr:open("test/polygon.shp"),
 Layer = erlogr:ds_get_layer(DataSource, 0),
 FeatureDefn = erlogr:l_get_layer_defn(Layer),
 erlogr:fd_get_fields_type(FeatureDefn).
-
+{"Integer","String"}
 */
 static ERL_NIF_TERM
 fd_get_fields_type(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
