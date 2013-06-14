@@ -20,6 +20,7 @@
     dr_get_name/1,
     f_get_fields/1,
     f_get_geometry_ref/1,
+    f_get_geometry/1,
     fd_get_field_count/1,
     fd_get_field_defn/2,
     fd_get_fields_name/1,
@@ -77,6 +78,9 @@ g_export_to_wkt(_Geometry) ->
     "NIF library not loaded".
 
 f_get_fields(_Feature) ->
+    "NIF library not loaded".
+
+f_get_geometry(_Feature) ->
     "NIF library not loaded".
 
 f_get_geometry_ref(_Feature) ->

@@ -17,10 +17,11 @@ main(_) ->
     code:add_pathz("test"),
     code:add_pathz("ebin"),
 
-    etap:plan(3),
+    etap:plan(4),
     test_get_driver(),
     test_get_driver_by_name(),
     test_g_export_to_wkt(),
+    test_gref_export_to_wkt(),
 
     etap:end_tests().
 
@@ -30,8 +31,17 @@ test_g_export_to_wkt() ->
     {ok, DataSource} = erlogr:open("test/polygon.shp"),
     {ok, Layer} = erlogr:ds_get_layer(DataSource, 0),
     {ok, Feature} = erlogr:l_get_feature(Layer, 0),
-    {ok, Geometry} = erlogr:f_get_geometry_ref(Feature),
+    {ok, Geometry} = erlogr:f_get_geometry(Feature),
     {ok, Wkt} = erlogr:g_export_to_wkt(Geometry),
+    etap:is(Wkt, "POLYGON ((0.351988636363636 -0.969460227272728,2.058238636363636 0.086505681818182,2.690625 -1.524289772727273,0.0 -2.0015625,-0.304261363636364 -1.828551136363636,0.351988636363636 -0.969460227272728))",
+        "Function g_export_to_wkt works").
+
+test_gref_export_to_wkt() ->
+    {ok, DataSource} = erlogr:open("test/polygon.shp"),
+    {ok, Layer} = erlogr:ds_get_layer(DataSource, 0),
+    {ok, Feature} = erlogr:l_get_feature(Layer, 0),
+    {ok, GeometryRef} = erlogr:f_get_geometry_ref(Feature),
+    {ok, Wkt} = erlogr:g_export_to_wkt(GeometryRef),
     etap:is(Wkt, "POLYGON ((0.351988636363636 -0.969460227272728,2.058238636363636 0.086505681818182,2.690625 -1.524289772727273,0.0 -2.0015625,-0.304261363636364 -1.828551136363636,0.351988636363636 -0.969460227272728))",
         "Function g_export_to_wkt works").
 
