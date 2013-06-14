@@ -63,74 +63,74 @@ init() ->
     (catch erlang:load_nif(SoName, 0)).
 
 ds_get_layer(_Datasource, _Index) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 ds_get_layer_count(_Datasource) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 dr_get_name(_Driver) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 g_export_to_wkb(_Geometry) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 g_export_to_wkt(_Geometry) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 f_get_fields(_Feature) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 f_get_geometry(_Feature) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 f_get_geometry_ref(_Feature) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 fd_get_field_count(_FeatureDefn) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 fd_get_field_defn(_FeatureDefn, _Index) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 fd_get_fields_name(_FeatureDefn) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 fd_get_fields_type(_FeatureDefn) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 fd_get_geom_type(_FeatureDefn) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 fld_get_name_ref(_FieldDefn) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 fld_get_type(_FieldDefn) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 l_get_feature(_Layer, _Index) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 l_get_feature_count(_Layer) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 l_get_next_feature(_Layer) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 l_get_layer_defn(_Layer) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 l_reset_reading(_Layer) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 get_driver(_DriverIdx) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 get_driver_by_name(_DriverName) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 open(_FileName) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
 open(_FileName, _Update) ->
-    "NIF library not loaded".
+    erlang:nif_error(nif_not_loaded).
 
