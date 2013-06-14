@@ -28,10 +28,10 @@ main(_) ->
 
 test_g_export_to_wkt() ->
     {ok, DataSource} = erlogr:open("test/polygon.shp"),
-    Layer = erlogr:ds_get_layer(DataSource, 0),
-    Feature = erlogr:l_get_feature(Layer, 0),
-    Geometry = erlogr:f_get_geometry_ref(Feature),
-    Wkt = erlogr:g_export_to_wkt(Geometry),
+    {ok, Layer} = erlogr:ds_get_layer(DataSource, 0),
+    {ok, Feature} = erlogr:l_get_feature(Layer, 0),
+    {ok, Geometry} = erlogr:f_get_geometry_ref(Feature),
+    {ok, Wkt} = erlogr:g_export_to_wkt(Geometry),
     etap:is(Wkt, "POLYGON ((0.351988636363636 -0.969460227272728,2.058238636363636 0.086505681818182,2.690625 -1.524289772727273,0.0 -2.0015625,-0.304261363636364 -1.828551136363636,0.351988636363636 -0.969460227272728))",
         "Function g_export_to_wkt works").
 
@@ -39,14 +39,14 @@ test_g_export_to_wkt() ->
 % Driver Functions
 
 test_get_driver() ->
-    Driver = erlogr:get_driver(0),
-    DriverName = erlogr:dr_get_name(Driver),
+    {ok, Driver} = erlogr:get_driver(0),
+    {ok, DriverName} = erlogr:dr_get_name(Driver),
     etap:is(DriverName, "ESRI Shapefile",
         "Function get_driver works").
 
 test_get_driver_by_name() ->
-    Driver = erlogr:get_driver_by_name("ESRI Shapefile"),
-    DriverName = erlogr:dr_get_name(Driver),
+    {ok, Driver} = erlogr:get_driver_by_name("ESRI Shapefile"),
+    {ok, DriverName} = erlogr:dr_get_name(Driver),
     etap:is(DriverName, "ESRI Shapefile",
         "Function get_driver_by_name works").
 

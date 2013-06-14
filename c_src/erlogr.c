@@ -136,10 +136,10 @@ unload(ErlNifEnv* env, void* priv_data)
 /* OGR_G_ExportToWkb (OGRGeometryH, OGRwkbByteOrder, unsigned char *)
 
 {ok, DataSource} = erlogr:open("test/polygon.shp"),
-Layer = erlogr:ds_get_layer(DataSource, 0),
-Feature = erlogr:l_get_feature(Layer, 0),
-Geometry = erlogr:f_get_geometry_ref(Feature),
-Wkb = erlogr:g_export_to_wkb(Geometry).
+{ok, Layer} = erlogr:ds_get_layer(DataSource, 0),
+{ok, Feature} = erlogr:l_get_feature(Layer, 0),
+{ok, Geometry} = erlogr:f_get_geometry_ref(Feature),
+{ok, Wkb} = erlogr:g_export_to_wkb(Geometry).
 
 */
 static ERL_NIF_TERM
@@ -149,12 +149,12 @@ g_export_to_wkb(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     ERL_NIF_TERM eterm;
 
     if(!(enif_get_resource(env, argv[0], OGR_GREF_RESOURCE, (void**)&geom))) {
-        return 0; 
+        return enif_make_badarg(env); 
     }
 
     //if(!(enif_get_resource(env, argv[0], OGR_GREF_RESOURCE, (void**)&geom) ||
     //     enif_get_resource(env, argv[0], OGR_G_RESOURCE, (void**)&geom))) {
-    //    return 0; 
+    //    return enif_make_badarg(env); 
     //}
 
     int size = OGR_G_WkbSize(*geom);
@@ -163,22 +163,24 @@ g_export_to_wkb(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         (OGRwkbByteOrder)(( htonl( 1 ) == 1 ) ? 0 : 1),
         wkb);
     if (eErr != OGRERR_NONE) {
-        return 0;
+        return enif_make_tuple2(env,
+            enif_make_atom(env, "error"),
+            enif_make_int(env, eErr));
     }
 
     ErlNifBinary bin = {.size = size, .data = wkb};
     eterm = enif_make_binary(env, &bin);
     OGRFree(wkb);
-    return eterm;
+    return enif_make_tuple2(env, enif_make_atom(env, "ok"), eterm);
 }
 
 /* OGR_G_ExportToWkt(OGRGeometryH, char **)
 
 {ok, DataSource} = erlogr:open("test/polygon.shp"),
-Layer = erlogr:ds_get_layer(DataSource, 0),
-Feature = erlogr:l_get_feature(Layer, 0),
-Geometry = erlogr:f_get_geometry_ref(Feature),
-Wkt = erlogr:g_export_to_wkt(Geometry).
+{ok, Layer} = erlogr:ds_get_layer(DataSource, 0),
+{ok, Feature} = erlogr:l_get_feature(Layer, 0),
+{ok, Geometry} = erlogr:f_get_geometry_ref(Feature),
+{ok, Wkt} = erlogr:g_export_to_wkt(Geometry).
 
 */
 static ERL_NIF_TERM
@@ -188,17 +190,20 @@ g_export_to_wkt(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     ERL_NIF_TERM eterm;
 
     if(!enif_get_resource(env, argv[0], OGR_GREF_RESOURCE, (void**)&geometry)) {
-        return 0;
+        return enif_make_badarg(env);
     }
 
     char *wkt = NULL;
-    if (OGR_G_ExportToWkt(*geometry, &wkt) != OGRERR_NONE) {
-        return 0;
+    OGRErr eErr = OGR_G_ExportToWkt(*geometry, &wkt);
+    if (eErr != OGRERR_NONE) {
+        return enif_make_tuple2(env,
+            enif_make_atom(env, "error"),
+            enif_make_int(env, eErr));
     }
 
     eterm = enif_make_string(env, wkt, ERL_NIF_LATIN1);
     OGRFree(wkt);
-    return eterm;
+    return enif_make_tuple2(env, enif_make_atom(env, "ok"), eterm);
 }
  
 /************************************************************************
@@ -210,9 +215,9 @@ g_export_to_wkt(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 /* OGRGeometryH OGR_F_GetGeometryRef(OGRFeatureH hFeat)    
 
 {ok, DataSource} = erlogr:open("test/polygon.shp"),
-Layer = erlogr:ds_get_layer(DataSource, 0),
-Feature = erlogr:l_get_feature(Layer, 0),
-Geometry = erlogr:f_get_geometry_ref(Feature).
+{ok, Layer} = erlogr:ds_get_layer(DataSource, 0),
+{ok, Feature} = erlogr:l_get_feature(Layer, 0),
+{ok, Geometry} = erlogr:f_get_geometry_ref(Feature).
 
 */
 static ERL_NIF_TERM
@@ -222,12 +227,14 @@ f_get_geometry_ref(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     ERL_NIF_TERM eterm;
 
     if(!enif_get_resource(env, argv[0], OGR_F_RESOURCE, (void**)&feature)) {
-        return 0;
+        return enif_make_badarg(env);
     }
 
     OGRGeometryH geom = OGR_F_GetGeometryRef(*feature);
     if(geom == NULL) {
-        return 0;
+        return enif_make_tuple2(env,
+            enif_make_atom(env, "error"),
+            enif_make_atom(env, "undefined"));
     }
 
     OGRGeometryH **geometry = \
@@ -237,7 +244,7 @@ f_get_geometry_ref(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     eterm = enif_make_resource(env, geometry);
     enif_release_resource(geometry);
-    return eterm;
+    return enif_make_tuple2(env, enif_make_atom(env, "ok"), eterm);
 }
 
 /************************************************************************
@@ -249,9 +256,9 @@ f_get_geometry_ref(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 /* int  OGR_FD_GetFieldCount(OGRFeatureDefnH)
 
 {ok, DataSource} = erlogr:open("test/polygon.shp"),
-Layer = erlogr:ds_get_layer(DataSource, 0),
-FeatureDefn = erlogr:l_get_layer_defn(Layer),
-FieldCount = erlogr:fd_get_field_count(FeatureDefn).
+{ok, Layer} = erlogr:ds_get_layer(DataSource, 0),
+{ok, FeatureDefn} = erlogr:l_get_layer_defn(Layer),
+{ok, FieldCount} = erlogr:fd_get_field_count(FeatureDefn).
 
 */
 static ERL_NIF_TERM
@@ -261,21 +268,21 @@ fd_get_field_count(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     ERL_NIF_TERM eterm;
 
     if(!enif_get_resource(env, argv[0], OGR_FD_RESOURCE, (void**)&feat_defn)) {
-        return 0;
+        return enif_make_badarg(env);
     }
 
     int field_count = OGR_FD_GetFieldCount(*feat_defn);
 
     eterm = enif_make_int(env, field_count);
-    return eterm;
+    return enif_make_tuple2(env, enif_make_atom(env, "ok"), eterm);
 }
  
 /* OGRFieldDefnH OGR_FD_GetFieldDefn(OGRFeatureDefnH hDefn, int iField)   
 
 {ok, DataSource} = erlogr:open("test/polygon.shp"),
-Layer = erlogr:ds_get_layer(DataSource, 0),
-FeatureDefn = erlogr:l_get_layer_defn(Layer),
-FieldDefn = erlogr:fd_get_field_defn(FeatureDefn, 0).
+{ok, Layer} = erlogr:ds_get_layer(DataSource, 0),
+{ok, FeatureDefn} = erlogr:l_get_layer_defn(Layer),
+{ok, FieldDefn} = erlogr:fd_get_field_defn(FeatureDefn, 0).
 
 */
 static ERL_NIF_TERM
@@ -286,17 +293,19 @@ fd_get_field_defn(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     ERL_NIF_TERM eterm;
 
     if(!enif_get_resource(env, argv[0], OGR_FD_RESOURCE, (void**)&feat_defn)) {
-        return 0;
+        return enif_make_badarg(env);
     }
 
     if (!enif_get_int(env, argv[1], &index)) {
-        return 0;
+        return enif_make_badarg(env);
     }
 
     OGRFieldDefnH fd_defn = OGR_FD_GetFieldDefn(*feat_defn, index);
 
     if(fd_defn == NULL) {
-        return 0;
+        return enif_make_tuple2(env,
+            enif_make_atom(env, "error"),
+            enif_make_atom(env, "undefined"));
     }
 
     OGRFeatureDefnH **field_defn = \
@@ -305,15 +314,15 @@ fd_get_field_defn(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     eterm = enif_make_resource(env, field_defn);
     enif_release_resource(field_defn);
-    return eterm;
+    return enif_make_tuple2(env, enif_make_atom(env, "ok"), eterm);
 }
  
 /* OGRwkbGeometryType OGR_FD_GetGeomType(OGRFeatureDefnH)
 
 {ok, DataSource} = erlogr:open("test/polygon.shp"),
-Layer = erlogr:ds_get_layer(DataSource, 0),
-FeatureDefn = erlogr:l_get_layer_defn(Layer),
-GeomType = erlogr:fd_get_geom_type(FeatureDefn).
+{ok, Layer} = erlogr:ds_get_layer(DataSource, 0),
+{ok, FeatureDefn} = erlogr:l_get_layer_defn(Layer),
+{ok, GeomType} = erlogr:fd_get_geom_type(FeatureDefn).
 
 */
 static ERL_NIF_TERM
@@ -323,13 +332,13 @@ fd_get_geom_type(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     ERL_NIF_TERM eterm;
 
     if(!enif_get_resource(env, argv[0], OGR_FD_RESOURCE, (void**)&feat_defn)) {
-        return 0;
+        return enif_make_badarg(env);
     }
 
     OGRwkbGeometryType geom_type = OGR_FD_GetGeomType(*feat_defn);
 
     eterm = enif_make_int(env, geom_type);
-    return eterm;
+    return enif_make_tuple2(env, enif_make_atom(env, "ok"), eterm);
 }
 
 /************************************************************************
@@ -340,10 +349,10 @@ fd_get_geom_type(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 /* OGRFieldType OGR_Fld_GetNameRef(OGRFieldDefnH)
 
 {ok, DataSource} = erlogr:open("test/polygon.shp"),
-Layer = erlogr:ds_get_layer(DataSource, 0),
-FeatureDefn = erlogr:l_get_layer_defn(Layer).
-FieldDefn = erlogr:fd_get_field_defn(FeatureDefn, 0),
-FieldName = erlogr:fld_get_name_ref(FieldDefn).
+{ok, Layer} = erlogr:ds_get_layer(DataSource, 0),
+{ok, FeatureDefn} = erlogr:l_get_layer_defn(Layer).
+{ok, FieldDefn} = erlogr:fd_get_field_defn(FeatureDefn, 0),
+{ok, FieldName} = erlogr:fld_get_name_ref(FieldDefn).
 
 */
 static ERL_NIF_TERM
@@ -353,23 +362,23 @@ fld_get_name_ref(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     ERL_NIF_TERM eterm;
 
     if(!enif_get_resource(env, argv[0], OGR_FLD_RESOURCE, (void**)&field_defn)){
-        return 0;
+        return enif_make_badarg(env);
     }
 
     const char * field_name = OGR_Fld_GetNameRef(*field_defn);
 
     eterm = enif_make_string(env, field_name, ERL_NIF_LATIN1);
-    return eterm;
+    return enif_make_tuple2(env, enif_make_atom(env, "ok"), eterm);
 }
 
 
 /* OGRFieldType OGR_Fld_GetType(OGRFieldDefnH)
 
 {ok, DataSource} = erlogr:open("test/polygon.shp"),
-Layer = erlogr:ds_get_layer(DataSource, 0),
-FeatureDefn = erlogr:l_get_layer_defn(Layer).
-FieldDefn = erlogr:fd_get_field_defn(FeatureDefn, 0),
-FieldType = erlogr:fld_get_type(FieldDefn).
+{ok, Layer} = erlogr:ds_get_layer(DataSource, 0),
+{ok, FeatureDefn} = erlogr:l_get_layer_defn(Layer).
+{ok, FieldDefn} = erlogr:fd_get_field_defn(FeatureDefn, 0),
+{ok, FieldType} = erlogr:fld_get_type(FieldDefn).
 
 */
 static ERL_NIF_TERM
@@ -379,13 +388,13 @@ fld_get_type(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     ERL_NIF_TERM eterm;
 
     if(!enif_get_resource(env, argv[0], OGR_FLD_RESOURCE, (void**)&field_defn)){
-        return 0;
+        return enif_make_badarg(env);
     }
 
     OGRFieldType field_type = OGR_Fld_GetType(*field_defn);
 
     eterm = enif_make_int(env, field_type);
-    return eterm;
+    return enif_make_tuple2(env, enif_make_atom(env, "ok"), eterm);
 }
 
  
@@ -398,8 +407,8 @@ fld_get_type(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 /* OGRFeatureH OGR_L_GetFeature(OGRLayerH hLayer, long nFeatureId)   
 
 {ok, DataSource} = erlogr:open("test/polygon.shp"),
-Layer = erlogr:ds_get_layer(DataSource, 0),
-Feature = erlogr:l_get_feature(Layer, 0).
+{ok, Layer} = erlogr:ds_get_layer(DataSource, 0),
+{ok, Feature} = erlogr:l_get_feature(Layer, 0).
 
 */
 static ERL_NIF_TERM
@@ -410,16 +419,18 @@ l_get_feature(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     ERL_NIF_TERM eterm;
 
     if(!enif_get_resource(env, argv[0], OGR_L_RESOURCE, (void**)&layer)) {
-        return 0;
+        return enif_make_badarg(env);
     }
 
     if (!enif_get_int(env, argv[1], &index)) {
-        return 0;
+        return enif_make_badarg(env);
     }
 
     OGRFeatureH feat = OGR_L_GetFeature(*layer, index);
     if(feat == NULL) {
-        return 0;
+        return enif_make_tuple2(env,
+            enif_make_atom(env, "error"),
+            enif_make_atom(env, "undefined"));
     }
 
     OGRFeatureH **feature = \
@@ -428,48 +439,46 @@ l_get_feature(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     eterm = enif_make_resource(env, feature);
     enif_release_resource(feature);
-    return eterm;
+    return enif_make_tuple2(env, enif_make_atom(env, "ok"), eterm);
 }
 
 /* OGRFeatureH OGR_L_GetNextFeature(OGRLayerH hLayer)   
 
 {ok, DataSource} = erlogr:open("test/polygon.shp"),
-Layer = erlogr:ds_get_layer(DataSource, 0),
-Feature = erlogr:l_get_next_feature(Layer).
+{ok, Layer} = erlogr:ds_get_layer(DataSource, 0),
+{ok, Feature} = erlogr:l_get_next_feature(Layer).
 
 */
 static ERL_NIF_TERM
 l_get_next_feature(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     OGRLayerH *layer;
-    ERL_NIF_TERM eterm1, eterm2;
+    ERL_NIF_TERM eterm;
 
     if(!enif_get_resource(env, argv[0], OGR_L_RESOURCE, (void**)&layer)) {
-        return 0;
+        return enif_make_badarg(env);
     }
 
     OGRFeatureH feat = OGR_L_GetNextFeature(*layer);
     if(feat == NULL) {
-        eterm1 = enif_make_atom(env, "error");
-        eterm2 = enif_make_string(env, "No more features", ERL_NIF_LATIN1);
-        return enif_make_tuple2(env,  eterm1, eterm2); 
+        eterm = enif_make_string(env, "No more features", ERL_NIF_LATIN1);
+        return enif_make_tuple2(env, enif_make_atom(env, "error"), eterm); 
     }
 
     OGRFeatureH **feature = \
         enif_alloc_resource(OGR_F_RESOURCE, sizeof(OGRFeatureH*));
     *feature = feat;
 
-    eterm1 = enif_make_atom(env, "ok");
-    eterm2 = enif_make_resource(env, feature);
+    eterm = enif_make_resource(env, feature);
     enif_release_resource(feature);
-    return enif_make_tuple2(env,  eterm1, eterm2); 
+    return enif_make_tuple2(env, enif_make_atom(env, "ok"), eterm); 
 }
  
 /* OGRFeatureH OGR_L_ResetReading(OGRLayerH hLayer)   
 
 {ok, DataSource} = erlogr:open("test/polygon.shp"),
-Layer = erlogr:ds_get_layer(DataSource, 0),
-Feature = erlogr:l_get_next_feature(Layer).
+{ok, Layer} = erlogr:ds_get_layer(DataSource, 0),
+erlogr:l_get_next_feature(Layer).
 erlogr:l_get_next_feature(Layer).
 erlogr:l_reset_reading(Layer).
 erlogr:l_get_next_feature(Layer).
@@ -482,7 +491,7 @@ l_reset_reading(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     ERL_NIF_TERM eterm;
 
     if(!enif_get_resource(env, argv[0], OGR_L_RESOURCE, (void**)&layer)) {
-        return 0;
+        return enif_make_badarg(env);
     }
 
     OGR_L_ResetReading(*layer);
@@ -494,8 +503,8 @@ l_reset_reading(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 /* int OGR_L_GetFeatureCount(OGRLayerH hLayer, int bForce)
 
 {ok, DataSource} = erlogr:open("test/polygon.shp"),
-Layer = erlogr:ds_get_layer(DataSource, 0),
-erlogr:l_get_feature_count(Layer).
+{ok, Layer} = erlogr:ds_get_layer(DataSource, 0),
+{ok, COunt} = erlogr:l_get_feature_count(Layer).
 
 */
 static ERL_NIF_TERM
@@ -505,19 +514,19 @@ l_get_feature_count(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     ERL_NIF_TERM eterm;
 
     if(!enif_get_resource(env, argv[0], OGR_L_RESOURCE, (void**)&layer)) {
-        return 0;
+        return enif_make_badarg(env);
     }
 
     int count = OGR_L_GetFeatureCount(*layer, 1);
     eterm = enif_make_int(env, count);
-    return eterm;
+    return enif_make_tuple2(env, enif_make_atom(env, "ok"), eterm); 
 }
  
 /* OGRFeatureDefnH OGR_L_GetLayerDefn(OGRLayerH hLayer)
 
 {ok, DataSource} = erlogr:open("test/polygon.shp"),
-Layer = erlogr:ds_get_layer(DataSource, 0),
-FeatureDefn = erlogr:l_get_layer_defn(Layer).
+{ok, Layer} = erlogr:ds_get_layer(DataSource, 0),
+{ok, FeatureDefn} = erlogr:l_get_layer_defn(Layer).
 
 */
 static ERL_NIF_TERM
@@ -527,7 +536,7 @@ l_get_layer_defn(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     ERL_NIF_TERM eterm;
 
     if(!enif_get_resource(env, argv[0], OGR_L_RESOURCE, (void**)&layer)) {
-        return 0;
+        return enif_make_badarg(env);
     }
 
     OGRFeatureDefnH feat_defn = OGR_L_GetLayerDefn(*layer);
@@ -538,7 +547,7 @@ l_get_layer_defn(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     eterm = enif_make_resource(env, feature_defn);
     enif_release_resource(feature_defn);
-    return eterm;
+    return enif_make_tuple2(env, enif_make_atom(env, "ok"), eterm); 
 }
 
 /************************************************************************
@@ -550,7 +559,7 @@ l_get_layer_defn(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 /* int    CPL_DLL OGR_DS_GetLayerCount( OGRDataSourceH );
 
 {ok, DataSource} = erlogr:open("test/polygon.shp"),
-erlogr:ds_get_layer_count(DataSource).
+{ok, Count} = erlogr:ds_get_layer_count(DataSource).
 
 */
 static ERL_NIF_TERM
@@ -560,12 +569,12 @@ ds_get_layer_count(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     ERL_NIF_TERM eterm;
 
     if(!enif_get_resource(env, argv[0], OGR_DS_RESOURCE, (void**)&datasource)) {
-        return 0;
+        return enif_make_badarg(env);
     }
 
     int count = OGR_DS_GetLayerCount(*datasource);
     eterm = enif_make_int(env, count);
-    return eterm;
+    return enif_make_tuple2(env, enif_make_atom(env, "ok"), eterm); 
 }
  
 /* OGRLayerH CPL_DLL OGR_DS_GetLayer( OGRDataSourceH, int );
@@ -582,17 +591,19 @@ ds_get_layer(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     ERL_NIF_TERM eterm;
 
     if (!enif_get_int(env, argv[1], &index)) {
-        return 0;
+        return enif_make_badarg(env);
     }
 
     if(!enif_get_resource(env, argv[0], OGR_DS_RESOURCE, (void**)&datasource)) {
-        return 0;
+        return enif_make_badarg(env);
     }
 
 
     OGRLayerH lyr = OGR_DS_GetLayer(*datasource, index);
     if(lyr == NULL) {
-        return 0;
+        return enif_make_tuple2(env,
+            enif_make_atom(env, "error"),
+            enif_make_atom(env, "undefined"));
     }
 
     OGRLayerH **layer = \
@@ -601,7 +612,7 @@ ds_get_layer(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     eterm = enif_make_resource(env, layer);
     enif_release_resource(layer);
-    return eterm;
+    return enif_make_tuple2(env, enif_make_atom(env, "ok"), eterm); 
 }
  
 /************************************************************************
@@ -623,7 +634,7 @@ open(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     char * filename;
     int update = 0; // read-only (default)
     OGRDataSourceH datasource;
-    ERL_NIF_TERM eterm1;
+    ERL_NIF_TERM eterm;
     /*
     OGRSFDriverH  *pahDriver;
     ERL_NIF_TERM eterm1, eterm2;
@@ -631,23 +642,25 @@ open(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     unsigned len;
     if (!enif_get_list_length(env, argv[0], &len)) {
-        return 0;
+        return enif_make_badarg(env);
     }
     filename = malloc(sizeof(char)*(len+1));
 
     if(!enif_get_string(env, argv[0], filename, len+1, ERL_NIF_LATIN1)) {
-        return 0;
+        return enif_make_badarg(env);
     }
 
     if (argc>1 && !enif_get_int(env, argv[1], &update)) {
-        return 0;
+        return enif_make_badarg(env);
     }
 
     datasource = OGROpen(filename, update, NULL);
     //datasource = OGROpen(filename, upadate, pahDriver);
 
     if(datasource == NULL) {
-        return 0;
+        return enif_make_tuple2(env,
+            enif_make_atom(env, "error"),
+            enif_make_atom(env, "undefined"));
     }
 
     OGRDataSourceH **hDS = \
@@ -661,9 +674,9 @@ open(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     */
 
 
-    eterm1 = enif_make_resource(env, hDS);
+    eterm = enif_make_resource(env, hDS);
     enif_release_resource(hDS);
-    return enif_make_tuple2(env, enif_make_atom(env, "ok"), eterm1);
+    return enif_make_tuple2(env, enif_make_atom(env, "ok"), eterm);
     /*
     eterm2 = enif_make_resource(env, hDriver);
     enif_release_resource(hDriver);
@@ -673,9 +686,7 @@ open(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 /* OGRSFDriverH CPL_DLL OGRGetDriver( int );
 
-Driver = erlogr:get_driver(0),
-erlogr:dr_get_name(Driver).
-"ESRI Shapefile"
+{ok, Driver} = erlogr:get_driver(0),
 
 */
 static ERL_NIF_TERM
@@ -685,15 +696,15 @@ get_driver(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     ERL_NIF_TERM eterm;
 
     if (!enif_get_int(env, argv[0], &driver_idx)) {
-        return 0;
+        return enif_make_badarg(env);
     }
 
     OGRSFDriverH drv = OGRGetDriver(driver_idx); 
 
-    if (!drv)
-    {
-        //printf("Driver not found!\n");
-        return 0;
+    if (!drv) {
+        return enif_make_tuple2(env,
+            enif_make_atom(env, "error"),
+            enif_make_string(env, "Driver not found", ERL_NIF_LATIN1));
     } 
 
     OGRSFDriverH **driver = \
@@ -702,7 +713,7 @@ get_driver(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     eterm = enif_make_resource(env, driver);
     enif_release_resource(driver);
-    return eterm;
+    return enif_make_tuple2(env, enif_make_atom(env, "ok"), eterm);
 }
 
 /* OGRSFDriverH CPL_DLL OGRGetDriverByName( const char * );
@@ -720,20 +731,20 @@ get_driver_by_name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     unsigned len;
     if (!enif_get_list_length(env, argv[0], &len)){
-        return 0;
+        return enif_make_badarg(env);
     }
     driver_name = malloc(sizeof(char)*(len+1));
 
     if(!enif_get_string(env, argv[0], driver_name, len+1, ERL_NIF_LATIN1)) {
-        return 0;
+        return enif_make_badarg(env);
     }
 
     OGRSFDriverH drv = OGRGetDriverByName(driver_name);
 
-    if (!drv)
-    {
-        //printf("Driver not found!\n");
-        return 0;
+    if (!drv) {
+        return enif_make_tuple2(env,
+            enif_make_atom(env, "error"),
+            enif_make_string(env, "Driver not found", ERL_NIF_LATIN1));
     } 
 
     OGRSFDriverH **driver = \
@@ -743,7 +754,7 @@ get_driver_by_name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     eterm = enif_make_resource(env, driver);
     enif_release_resource(driver);
     free(driver_name);
-    return eterm;
+    return enif_make_tuple2(env, enif_make_atom(env, "ok"), eterm); 
 }
 
 /************************************************************************
@@ -754,9 +765,9 @@ get_driver_by_name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 /* const char CPL_DLL *OGR_Dr_GetName( OGRSFDriverH );
 
-Driver = erlogr:get_driver(0),
-erlogr:dr_get_name(Driver).
-"ESRI Shapefile"
+{ok, Driver} = erlogr:get_driver(0),
+{ok, Name} = erlogr:dr_get_name(Driver).
+{ok, "ESRI Shapefile"}
 
 */
 static ERL_NIF_TERM
@@ -766,11 +777,11 @@ dr_get_name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     ERL_NIF_TERM eterm;
 
     if(!enif_get_resource(env, argv[0], OGR_D_RESOURCE, (void**)&driver)) {
-        return 0;
+        return enif_make_badarg(env);
     }
     const char *driver_name = OGR_Dr_GetName(*driver);
     eterm = enif_make_string(env, driver_name, ERL_NIF_LATIN1);
-    return eterm;
+    return enif_make_tuple2(env, enif_make_atom(env, "ok"), eterm); 
 }
 
 /************************************************************************
@@ -782,9 +793,9 @@ dr_get_name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 /*
 
 {ok, DataSource} = erlogr:open("test/polygon.shp"),
-Layer = erlogr:ds_get_layer(DataSource, 0),
-Feature = erlogr:l_get_feature(Layer, 0),
-erlogr:f_get_fields(Feature).
+{ok, Layer} = erlogr:ds_get_layer(DataSource, 0),
+{ok, Feature} = erlogr:l_get_feature(Layer, 0),
+{ok, Fields} = erlogr:f_get_fields(Feature).
 {1,"first"}
 */
 static ERL_NIF_TERM
@@ -794,7 +805,7 @@ f_get_fields(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     ERL_NIF_TERM eterm;
 
     if(!enif_get_resource(env, argv[0], OGR_F_RESOURCE, (void**)&feature)) {
-        return 0;
+        return enif_make_badarg(env);
     }
 
     OGRFeatureDefnH feature_defn = OGR_F_GetDefnRef(*feature);
@@ -823,15 +834,15 @@ f_get_fields(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     eterm = enif_make_tuple_from_array(env, arr, index);
     free(arr);
-    return eterm;
+    return enif_make_tuple2(env, enif_make_atom(env, "ok"), eterm); 
 }
 
 /*
 
 {ok, DataSource} = erlogr:open("test/polygon.shp"),
-Layer = erlogr:ds_get_layer(DataSource, 0),
-FeatureDefn = erlogr:l_get_layer_defn(Layer),
-erlogr:fd_get_fields_name(FeatureDefn).
+{ok, Layer} = erlogr:ds_get_layer(DataSource, 0),
+{ok, FeatureDefn} = erlogr:l_get_layer_defn(Layer),
+{ok, Names} = erlogr:fd_get_fields_name(FeatureDefn).
 {"id","name"}
 */
 static ERL_NIF_TERM
@@ -841,14 +852,13 @@ fd_get_fields_name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     ERL_NIF_TERM eterm;
 
     if(!enif_get_resource(env, argv[0], OGR_FD_RESOURCE, (void**)&feat_defn)) {
-        return 0;
+        return enif_make_badarg(env);
     }
 
     int count = OGR_FD_GetFieldCount(*feat_defn);
     ERL_NIF_TERM *arr = (ERL_NIF_TERM *) malloc(sizeof(ERL_NIF_TERM)*count);
     int index;
-    for(index=0; index<count; index++)
-    {
+    for(index=0; index<count; index++) {
         OGRFieldDefnH field_defn = OGR_FD_GetFieldDefn(*feat_defn, index);
         arr[index] = enif_make_string(env,
             OGR_Fld_GetNameRef(field_defn),
@@ -857,15 +867,15 @@ fd_get_fields_name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     eterm = enif_make_tuple_from_array(env, arr, index);
     free(arr);
-    return eterm;
+    return enif_make_tuple2(env, enif_make_atom(env, "ok"), eterm); 
 }
 
 /*
 
 {ok, DataSource} = erlogr:open("test/polygon.shp"),
-Layer = erlogr:ds_get_layer(DataSource, 0),
-FeatureDefn = erlogr:l_get_layer_defn(Layer),
-erlogr:fd_get_fields_type(FeatureDefn).
+{ok, Layer} = erlogr:ds_get_layer(DataSource, 0),
+{ok, FeatureDefn} = erlogr:l_get_layer_defn(Layer),
+{ok, Types} = erlogr:fd_get_fields_type(FeatureDefn).
 {"Integer","String"}
 */
 static ERL_NIF_TERM
@@ -875,7 +885,7 @@ fd_get_fields_type(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     ERL_NIF_TERM eterm;
 
     if(!enif_get_resource(env, argv[0], OGR_FD_RESOURCE, (void**)&feat_defn)) {
-        return 0;
+        return enif_make_badarg(env);
     }
 
     int count = OGR_FD_GetFieldCount(*feat_defn);
@@ -891,7 +901,7 @@ fd_get_fields_type(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     eterm = enif_make_tuple_from_array(env, arr, index);
     free(arr);
-    return eterm;
+    return enif_make_tuple2(env, enif_make_atom(env, "ok"), eterm); 
 }
 
 
