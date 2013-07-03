@@ -368,7 +368,7 @@ fd_get_field_count(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_badarg(env);
     }
 
-    int field_count = OGR_FD_GetFieldCount(*feat_defn);
+    int field_count = OGR_FD_GetFieldCount((**feat_defn).obj);
 
     eterm = enif_make_int(env, field_count);
     return enif_make_tuple2(env, enif_make_atom(env, "ok"), eterm);
@@ -401,7 +401,7 @@ fd_get_field_defn(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_badarg(env);
     }
 
-    OGRFieldDefnH fd_defn = OGR_FD_GetFieldDefn(*feat_defn, index);
+    OGRFieldDefnH fd_defn = OGR_FD_GetFieldDefn((**feat_defn).obj, index);
 
     if(fd_defn == NULL) {
         return enif_make_atom(env, "undefined");
@@ -1036,7 +1036,7 @@ f_get_fields(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM
 fd_get_fields_name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-    OGRFeatureDefnH *feat_defn;
+    EnvFeatureDefn_t **feat_defn;
     ERL_NIF_TERM eterm;
 
     if (argc != 1) {
@@ -1047,11 +1047,11 @@ fd_get_fields_name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_badarg(env);
     }
 
-    int count = OGR_FD_GetFieldCount(*feat_defn);
+    int count = OGR_FD_GetFieldCount((**feat_defn).obj);
     ERL_NIF_TERM *arr = (ERL_NIF_TERM *) malloc(sizeof(ERL_NIF_TERM)*count);
     int index;
     for(index=0; index<count; index++) {
-        OGRFieldDefnH field_defn = OGR_FD_GetFieldDefn(*feat_defn, index);
+        OGRFieldDefnH field_defn = OGR_FD_GetFieldDefn((**feat_defn).obj, index);
         arr[index] = enif_make_string(env,
             OGR_Fld_GetNameRef(field_defn),
             ERL_NIF_LATIN1);
@@ -1073,7 +1073,7 @@ fd_get_fields_name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM
 fd_get_fields_type(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-    OGRFeatureDefnH *feat_defn;
+    EnvFeatureDefn_t **feat_defn;
     ERL_NIF_TERM eterm;
 
     if (argc != 1) {
@@ -1084,12 +1084,12 @@ fd_get_fields_type(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_badarg(env);
     }
 
-    int count = OGR_FD_GetFieldCount(*feat_defn);
+    int count = OGR_FD_GetFieldCount((**feat_defn).obj);
     ERL_NIF_TERM *arr = (ERL_NIF_TERM *) malloc(sizeof(ERL_NIF_TERM)*count);
     int index;
     for(index=0; index<count; index++)
     {
-        OGRFieldDefnH field_defn = OGR_FD_GetFieldDefn(*feat_defn, index);
+        OGRFieldDefnH field_defn = OGR_FD_GetFieldDefn((**feat_defn).obj, index);
         arr[index] = enif_make_string(env,
             OGR_GetFieldTypeName(OGR_Fld_GetType(field_defn)),
             ERL_NIF_LATIN1);
