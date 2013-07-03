@@ -31,7 +31,6 @@ static ErlNifResourceType* OGR_F_RESOURCE;
 static ErlNifResourceType* OGR_FD_RESOURCE;
 static ErlNifResourceType* OGR_FLD_RESOURCE;
 static ErlNifResourceType* OGR_G_RESOURCE;
-static ErlNifResourceType* OGR_GREF_RESOURCE;
 static ErlNifResourceType* OGR_D_RESOURCE;
 static ErlNifResourceType* OGR_L_RESOURCE;
 
@@ -88,40 +87,40 @@ feature_destroy(ErlNifEnv *env, void *obj)
     enif_free(*feature);
 }
 
-/*
 static void
-featuredefn_destroy(ErlNifEnv *env, void *obj)
+feature_defn_destroy(ErlNifEnv *env, void *obj)
 {
     // OGRFeatureDefn is owned by the OGRLayer,
     // and should not be modified or freed by the application
-    OGRFeatureDefnH **featuredefn = (OGRFeatureDefnH**)obj;
-    OGR_FD_Destroy(*featuredefn);
+    EnvFeatureDefn_t **feature_defn = (EnvFeatureDefn_t**)obj;
+    //OGR_FD_Destroy((**feature_defn).obj);
+    enif_free_env((**feature_defn).env);
+    enif_free(*feature_defn);
 }
 
 static void
-fielddefn_destroy(ErlNifEnv *env, void *obj)
+field_defn_destroy(ErlNifEnv *env, void *obj)
 {
-    OGRFieldDefnH **fielddefn = (OGRFieldDefnH**)obj;
-    OGR_Fld_Destroy(*fielddefn);
-}
-*/
-
-static void
-geometryref_destroy(ErlNifEnv *env, void *obj)
-{
-    EnvGeometry_t **geometryref = (EnvGeometry_t**)obj;
-    enif_free_env((**geometryref).env);
-    enif_free(*geometryref);
+    // OGRFieldDefn should not be freed by the application
+    EnvFieldDefn_t **field_defn = (EnvFieldDefn_t**)obj;
+    //OGR_Fld_Destroy(*field_defn);
+    enif_free_env((**field_defn).env);
+    enif_free(*field_defn);
 }
 
 static void
 geometry_destroy(ErlNifEnv *env, void *obj)
 {
+    // If env is NULL then is GeometryRef else is Geometry
+    // GeometryRef should not be freed by the application
     EnvGeometry_t **geometry = (EnvGeometry_t**)obj;
-    OGR_G_DestroyGeometry((**geometry).obj);
+    if ((**geometry).env == NULL) {
+        OGR_G_DestroyGeometry((**geometry).obj);
+    } else {
+        enif_free_env((**geometry).env);
+    }
     enif_free(*geometry);
 }
-
 
 /* From https://github.com/iamaleksey/iconverl/blob/master/c_src/iconverl.c */
 static int
@@ -138,19 +137,15 @@ load(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info)
         ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL);
 
     OGR_FD_RESOURCE = enif_open_resource_type(
-        env, NULL, "ogr_fd_resource", NULL,
+        env, NULL, "ogr_fd_resource", &feature_defn_destroy,
         ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL);
 
     OGR_FLD_RESOURCE = enif_open_resource_type(
-        env, NULL, "ogr_fld_resource", NULL,
+        env, NULL, "ogr_fld_resource", &field_defn_destroy,
         ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL);
 
     OGR_G_RESOURCE = enif_open_resource_type(
         env, NULL, "ogr_g_resource", &geometry_destroy,
-        ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL);
-
-    OGR_GREF_RESOURCE = enif_open_resource_type(
-        env, NULL, "ogr_gref_resource", &geometryref_destroy,
         ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER, NULL);
 
     OGR_D_RESOURCE = enif_open_resource_type(
@@ -191,8 +186,11 @@ g_export_to_wkb(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     EnvGeometry_t **geom;
     ERL_NIF_TERM eterm;
 
-    if(!(enif_get_resource(env, argv[0], OGR_G_RESOURCE, (void**)&geom) ||
-         enif_get_resource(env, argv[0], OGR_GREF_RESOURCE, (void**)&geom))) {
+    if (argc != 1) {
+        return enif_make_badarg(env);
+    }
+
+    if (!enif_get_resource(env, argv[0], OGR_G_RESOURCE, (void**)&geom)) {
         return enif_make_badarg(env); 
     }
 
@@ -230,8 +228,11 @@ g_export_to_wkt(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     EnvGeometry_t **geom;
     ERL_NIF_TERM eterm;
 
-    if(!(enif_get_resource(env, argv[0], OGR_G_RESOURCE, (void**)&geom) ||
-         enif_get_resource(env, argv[0], OGR_GREF_RESOURCE, (void**)&geom))) {
+    if (argc != 1) {
+        return enif_make_badarg(env);
+    }
+
+    if (!enif_get_resource(env, argv[0], OGR_G_RESOURCE, (void**)&geom)) {
         return enif_make_badarg(env); 
     }
 
@@ -268,23 +269,27 @@ f_get_geometry_ref(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     EnvFeature_t **feature;
     ERL_NIF_TERM eterm;
 
+    if (argc != 1) {
+        return enif_make_badarg(env);
+    }
+
     if(!enif_get_resource(env, argv[0], OGR_F_RESOURCE, (void**)&feature)) {
         return enif_make_badarg(env);
     }
 
-    OGRGeometryH geomref = OGR_F_GetGeometryRef((**feature).obj);
-    if(geomref == NULL) {
+    OGRGeometryH geom = OGR_F_GetGeometryRef((**feature).obj);
+    if(geom == NULL) {
         return enif_make_atom(env, "undefined");
     }
 
     EnvGeometry_t **geometry = \
-        enif_alloc_resource(OGR_GREF_RESOURCE, sizeof(EnvGeometry_t*));
+        enif_alloc_resource(OGR_G_RESOURCE, sizeof(EnvGeometry_t*));
 
     ErlNifEnv *geometry_env = enif_alloc_env();
 
     *geometry = (EnvGeometry_t*) enif_alloc(sizeof(EnvGeometry_t));
     (**geometry).env = geometry_env;
-    (**geometry).obj = geomref;
+    (**geometry).obj = geom;
 
     // Save copy of feature so is not garbage collected
     enif_make_copy(geometry_env, argv[0]);
@@ -307,6 +312,10 @@ f_get_geometry(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     EnvFeature_t **feature;
     ERL_NIF_TERM eterm;
 
+    if (argc != 1) {
+        return enif_make_badarg(env);
+    }
+
     if(!enif_get_resource(env, argv[0], OGR_F_RESOURCE, (void**)&feature)) {
         return enif_make_badarg(env);
     }
@@ -319,12 +328,10 @@ f_get_geometry(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     OGRGeometryH geom_clone = OGR_G_Clone(geom);
 
     EnvGeometry_t **geometry = \
-        enif_alloc_resource(OGR_GREF_RESOURCE, sizeof(EnvGeometry_t*));
-
-    ErlNifEnv *geometry_env = enif_alloc_env();
+        enif_alloc_resource(OGR_G_RESOURCE, sizeof(EnvGeometry_t*));
 
     *geometry = (EnvGeometry_t*) enif_alloc(sizeof(EnvGeometry_t));
-    (**geometry).env = geometry_env;
+    (**geometry).env = NULL;
     (**geometry).obj = geom_clone;
 
     eterm = enif_make_resource(env, geometry);
@@ -350,8 +357,12 @@ f_get_geometry(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM
 fd_get_field_count(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-    OGRFeatureDefnH *feat_defn;
+    EnvFeatureDefn_t **feat_defn;
     ERL_NIF_TERM eterm;
+
+    if (argc != 1) {
+        return enif_make_badarg(env);
+    }
 
     if(!enif_get_resource(env, argv[0], OGR_FD_RESOURCE, (void**)&feat_defn)) {
         return enif_make_badarg(env);
@@ -374,9 +385,13 @@ fd_get_field_count(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM
 fd_get_field_defn(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-    OGRFeatureDefnH *feat_defn;
+    EnvFeatureDefn_t **feat_defn;
     int index;
     ERL_NIF_TERM eterm;
+
+    if (argc != 2) {
+        return enif_make_badarg(env);
+    }
 
     if(!enif_get_resource(env, argv[0], OGR_FD_RESOURCE, (void**)&feat_defn)) {
         return enif_make_badarg(env);
@@ -392,9 +407,17 @@ fd_get_field_defn(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_atom(env, "undefined");
     }
 
-    OGRFeatureDefnH **field_defn = \
-        enif_alloc_resource(OGR_FLD_RESOURCE, sizeof(OGRFieldDefnH*));
-    *field_defn = fd_defn;
+    EnvFieldDefn_t **field_defn = \
+        enif_alloc_resource(OGR_FLD_RESOURCE, sizeof(EnvFieldDefn_t*));
+
+    ErlNifEnv *field_defn_env = enif_alloc_env();
+
+    *field_defn = (EnvFieldDefn_t*) enif_alloc(sizeof(EnvFieldDefn_t));
+    (**field_defn).env = field_defn_env;
+    (**field_defn).obj = fd_defn;
+
+    // Save copy of layer so is not garbage collected
+    enif_make_copy(field_defn_env, argv[0]);
 
     eterm = enif_make_resource(env, field_defn);
     enif_release_resource(field_defn);
@@ -412,14 +435,18 @@ fd_get_field_defn(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM
 fd_get_geom_type(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-    OGRFeatureDefnH *feat_defn;
+    EnvFeatureDefn_t **feat_defn;
     ERL_NIF_TERM eterm;
+
+    if (argc != 1) {
+        return enif_make_badarg(env);
+    }
 
     if(!enif_get_resource(env, argv[0], OGR_FD_RESOURCE, (void**)&feat_defn)) {
         return enif_make_badarg(env);
     }
 
-    OGRwkbGeometryType geom_type = OGR_FD_GetGeomType(*feat_defn);
+    OGRwkbGeometryType geom_type = OGR_FD_GetGeomType((**feat_defn).obj);
 
     eterm = enif_make_int(env, geom_type);
     return enif_make_tuple2(env, enif_make_atom(env, "ok"), eterm);
@@ -442,14 +469,18 @@ fd_get_geom_type(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM
 fld_get_name_ref(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-    OGRFieldDefnH *field_defn;
+    EnvFieldDefn_t **field_defn;
     ERL_NIF_TERM eterm;
+
+    if (argc != 1) {
+        return enif_make_badarg(env);
+    }
 
     if(!enif_get_resource(env, argv[0], OGR_FLD_RESOURCE, (void**)&field_defn)){
         return enif_make_badarg(env);
     }
 
-    const char * field_name = OGR_Fld_GetNameRef(*field_defn);
+    const char * field_name = OGR_Fld_GetNameRef((**field_defn).obj);
 
     eterm = enif_make_string(env, field_name, ERL_NIF_LATIN1);
     return enif_make_tuple2(env, enif_make_atom(env, "ok"), eterm);
@@ -468,14 +499,18 @@ fld_get_name_ref(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM
 fld_get_type(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-    OGRFieldDefnH *field_defn;
+    EnvFieldDefn_t **field_defn;
     ERL_NIF_TERM eterm;
+
+    if (argc != 1) {
+        return enif_make_badarg(env);
+    }
 
     if(!enif_get_resource(env, argv[0], OGR_FLD_RESOURCE, (void**)&field_defn)){
         return enif_make_badarg(env);
     }
 
-    OGRFieldType field_type = OGR_Fld_GetType(*field_defn);
+    OGRFieldType field_type = OGR_Fld_GetType((**field_defn).obj);
 
     eterm = enif_make_int(env, field_type);
     return enif_make_tuple2(env, enif_make_atom(env, "ok"), eterm);
@@ -596,6 +631,10 @@ l_reset_reading(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     EnvLayer_t **layer;
     ERL_NIF_TERM eterm;
 
+    if (argc != 1) {
+        return enif_make_badarg(env);
+    }
+
     if(!enif_get_resource(env, argv[0], OGR_L_RESOURCE, (void**)&layer)) {
         return enif_make_badarg(env);
     }
@@ -619,6 +658,10 @@ l_get_feature_count(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     EnvLayer_t **layer;
     ERL_NIF_TERM eterm;
 
+    if (argc != 1) {
+        return enif_make_badarg(env);
+    }
+
     if(!enif_get_resource(env, argv[0], OGR_L_RESOURCE, (void**)&layer)) {
         return enif_make_badarg(env);
     }
@@ -641,15 +684,27 @@ l_get_layer_defn(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     EnvLayer_t **layer;
     ERL_NIF_TERM eterm;
 
+    if (argc != 1) {
+        return enif_make_badarg(env);
+    }
+
     if(!enif_get_resource(env, argv[0], OGR_L_RESOURCE, (void**)&layer)) {
         return enif_make_badarg(env);
     }
 
     OGRFeatureDefnH feat_defn = OGR_L_GetLayerDefn((**layer).obj);
 
-    OGRFeatureDefnH **feature_defn = \
-        enif_alloc_resource(OGR_FD_RESOURCE, sizeof(OGRFeatureDefnH*));
-    *feature_defn = feat_defn;
+    EnvFeatureDefn_t **feature_defn = \
+        enif_alloc_resource(OGR_FD_RESOURCE, sizeof(EnvFeatureDefn_t*));
+
+    ErlNifEnv *feature_defn_env = enif_alloc_env();
+
+    *feature_defn = (EnvFeatureDefn_t*) enif_alloc(sizeof(EnvFeatureDefn_t));
+    (**feature_defn).env = feature_defn_env;
+    (**feature_defn).obj = feat_defn;
+
+    // Save copy of layer so is not garbage collected
+    enif_make_copy(feature_defn_env, argv[0]);
 
     eterm = enif_make_resource(env, feature_defn);
     enif_release_resource(feature_defn);
@@ -673,6 +728,10 @@ ds_get_layer_count(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     OGRDataSourceH *datasource;
     ERL_NIF_TERM eterm;
+
+    if (argc != 1) {
+        return enif_make_badarg(env);
+    }
 
     if(!enif_get_resource(env, argv[0], OGR_DS_RESOURCE, (void**)&datasource)) {
         return enif_make_badarg(env);
@@ -808,6 +867,10 @@ get_driver(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     int driver_idx;
     ERL_NIF_TERM eterm;
 
+    if (argc != 1) {
+        return enif_make_badarg(env);
+    }
+
     if (!enif_get_int(env, argv[0], &driver_idx)) {
         return enif_make_badarg(env);
     }
@@ -841,6 +904,10 @@ get_driver_by_name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     char *driver_name;
     ERL_NIF_TERM eterm;
+
+    if (argc != 1) {
+        return enif_make_badarg(env);
+    }
 
     unsigned len;
     if (!enif_get_list_length(env, argv[0], &len)){
@@ -889,6 +956,10 @@ dr_get_name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     OGRSFDriverH **driver;
     ERL_NIF_TERM eterm;
 
+    if (argc != 1) {
+        return enif_make_badarg(env);
+    }
+
     if(!enif_get_resource(env, argv[0], OGR_D_RESOURCE, (void**)&driver)) {
         return enif_make_badarg(env);
     }
@@ -916,6 +987,10 @@ f_get_fields(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     EnvFeature_t **feature;
     ERL_NIF_TERM eterm;
+
+    if (argc != 1) {
+        return enif_make_badarg(env);
+    }
 
     if(!enif_get_resource(env, argv[0], OGR_F_RESOURCE, (void**)&feature)) {
         return enif_make_badarg(env);
@@ -964,6 +1039,10 @@ fd_get_fields_name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     OGRFeatureDefnH *feat_defn;
     ERL_NIF_TERM eterm;
 
+    if (argc != 1) {
+        return enif_make_badarg(env);
+    }
+
     if(!enif_get_resource(env, argv[0], OGR_FD_RESOURCE, (void**)&feat_defn)) {
         return enif_make_badarg(env);
     }
@@ -996,6 +1075,10 @@ fd_get_fields_type(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     OGRFeatureDefnH *feat_defn;
     ERL_NIF_TERM eterm;
+
+    if (argc != 1) {
+        return enif_make_badarg(env);
+    }
 
     if(!enif_get_resource(env, argv[0], OGR_FD_RESOURCE, (void**)&feat_defn)) {
         return enif_make_badarg(env);
