@@ -58,7 +58,13 @@ init() ->
             filename:join(["priv", "erlogr"])
         end;
     Dir ->
-        filename:join(Dir, "erlogr")
+        case os:getenv("ESCRIPT") of
+        "1" ->
+            filename:join([filename:dirname(escript:script_name()),
+                "..", "lib", "erlogr"]);
+        _ ->
+            filename:join(Dir, "erlogr")
+        end
     end,
     (catch erlang:load_nif(SoName, 0)).
 

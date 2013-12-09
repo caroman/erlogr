@@ -27,4 +27,7 @@ clean:
 	./rebar clean
 	rm -fr priv
 
-
+dialyzer-build: build
+	dialyzer --build_plt --output_plt erlogr.plt \
+        -o dialyzer.build \
+        -r src ebin
