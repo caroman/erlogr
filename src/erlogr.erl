@@ -21,6 +21,7 @@
     f_get_fields/1,
     f_get_geometry_ref/1,
     f_get_geometry/1,
+    fd_get_feature_name/1,
     fd_get_field_count/1,
     fd_get_field_defn/2,
     fd_get_fields_name/1,
@@ -90,6 +91,9 @@ f_get_geometry(_Feature) ->
     erlang:nif_error(nif_not_loaded).
 
 f_get_geometry_ref(_Feature) ->
+    erlang:nif_error(nif_not_loaded).
+
+fd_get_feature_name(_FeatureDefn) ->
     erlang:nif_error(nif_not_loaded).
 
 fd_get_field_count(_FeatureDefn) ->
